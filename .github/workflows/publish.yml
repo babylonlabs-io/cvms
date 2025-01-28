@@ -1,0 +1,20 @@
+name: docker_publish
+
+on:
+  push:
+    branches:
+      - 'develop'
+      - 'hiep/add-ci
+
+jobs:
+  docker_pipeline:
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.11.2
+    secrets: inherit
+    with:
+      publish: true
+      docker_scan: true
+    permissions:
+      # required for all workflows
+      security-events: write
+      # required to fetch internal or private CodeQL packs
+      packages: read
