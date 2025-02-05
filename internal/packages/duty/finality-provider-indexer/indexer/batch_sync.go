@@ -5,6 +5,7 @@ import (
 	"time"
 
 	commonapi "github.com/cosmostation/cvms/internal/common/api"
+	"github.com/cosmostation/cvms/internal/common/function"
 	indexertypes "github.com/cosmostation/cvms/internal/common/indexer/types"
 	"github.com/cosmostation/cvms/internal/helper"
 	"github.com/cosmostation/cvms/internal/packages/duty/finality-provider-indexer/model"
@@ -125,7 +126,7 @@ func (idx *FinalityProviderIndexer) batchSync(lastIndexPointerHeight int64) (
 		for pk := range item.FinalityProviderVotes {
 			_, exist := idx.Vim[pk]
 			if !exist {
-				// idx.Debugf("the miss finality provider %s isn't in current validator info table, it will be gonna added into the table", pk)
+				idx.Debugf("the miss finality provider %s isn't in current validator info table, it will be gonna added into the table", pk)
 				newFinalityProviderMap[pk] = true
 				isNewFinalityProvider = true
 			}
@@ -134,7 +135,7 @@ func (idx *FinalityProviderIndexer) batchSync(lastIndexPointerHeight int64) (
 
 	// this logic will be progressed only when there are new tendermint validators in this block
 	if isNewFinalityProvider {
-		newfpInfoList, err := GetFinalityProvidersInfo(idx.CommonClient, newFinalityProviderMap, idx.ChainInfoID)
+		newfpInfoList, err := function.MakeFinalityProviderInfoList(idx.CommonClient, idx.ChainInfoID, newFinalityProviderMap)
 		if err != nil {
 			errors.Wrap(err, "failed to make validator info list")
 		}
@@ -227,7 +228,7 @@ func makeBabylonFinalityProviderVoteList(
 	for btcPK, status := range fpVotes {
 		fpPKID, exist := validatorIDMap[btcPK]
 		if !exist {
-			return nil, errors.New("failed to find missed validators hex address id in validator id maps")
+			return nil, errors.Errorf("failed %s's id in validatorIDMap", btcPK)
 		}
 		if status == 0 {
 			l.Debugf("found missed finality provider idx: %d, address: %s in this block height: %d", validatorIDMap[btcPK], btcPK, missedBlockHeight)

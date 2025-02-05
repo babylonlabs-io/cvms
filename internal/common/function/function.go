@@ -229,12 +229,28 @@ func GetStakingValidators(client common.CommonClient, chainName string, newStaki
 	return nil
 }
 
-func MakeFinalityProviderInfoList(
-	app common.CommonApp,
-	chainID string, chainInfoID int64,
-	chainName string, isConsumer bool,
-	newValidatorAddressMap map[string]bool,
-	height ...int64,
-) ([]indexermodel.FinalityProviderInfo, error) {
-	return nil, nil
+func MakeFinalityProviderInfoList(c common.CommonClient, chainInfoID int64, newFinalityProviderMap map[string]bool) ([]indexermodel.FinalityProviderInfo, error) {
+	fps, err := api.GetBabylonFinalityProviderInfos(c)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+
+	fpInfoList := make([]indexermodel.FinalityProviderInfo, 0)
+	for _, fp := range fps {
+		// if found new btc pk, it need to add fp list for indexing
+		if newFinalityProviderMap[fp.BTCPK] {
+			fpInfoList = append(fpInfoList, indexermodel.FinalityProviderInfo{
+				ChainInfoID:     chainInfoID,
+				Moniker:         fp.Description.Moniker,
+				BTCPKs:          fp.BTCPK,
+				OperatorAddress: fp.Address,
+			})
+		}
+	}
+
+	if len(fpInfoList) == 0 {
+		return nil, errors.New("unexpected err")
+	}
+
+	return fpInfoList, nil
 }

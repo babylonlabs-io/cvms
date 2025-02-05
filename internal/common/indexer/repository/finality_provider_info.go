@@ -68,7 +68,7 @@ func (repo *MetaRepository) InsertFinalityProviderInfoList(fpInfoList []model.Fi
 		ExcludeColumn("id").
 		Exec(ctx)
 	if err != nil {
-		return errors.Wrapf(err, "failed to insert validator info list")
+		return errors.Wrapf(err, "failed to insert validator info list: %v", fpInfoList)
 	}
 
 	return nil

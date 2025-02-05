@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cosmostation/cvms/internal/common"
+	"github.com/cosmostation/cvms/internal/common/api"
 	commonparser "github.com/cosmostation/cvms/internal/common/parser"
 	"github.com/cosmostation/cvms/internal/helper/logger"
 	"github.com/cosmostation/cvms/internal/packages/duty/finality-provider-indexer/repository"
@@ -91,10 +92,7 @@ func TestBatchSync(t *testing.T) {
 func TestGetFinalityProvidersInfo(t *testing.T) {
 	app := common.NewCommonApp(p)
 	app.SetAPIEndPoint(BabylonBaseURL)
-
-	nm := make(map[string]bool, 0)
-	fpInfoList, err := GetFinalityProvidersInfo(app.CommonClient, nm, 1)
-
+	fpInfoList, err := api.GetBabylonFinalityProviderInfos(app.CommonClient)
 	assert.NoError(t, err)
 	t.Logf("new fp infos: %d", len(fpInfoList))
 	for idx, fp := range fpInfoList {

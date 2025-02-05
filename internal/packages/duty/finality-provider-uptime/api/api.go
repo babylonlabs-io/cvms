@@ -12,14 +12,14 @@ func GetFinalityProviderUptime(exporter *common.Exporter) (types.BabylonFinality
 	// 1. get finality provider infos
 	finalityProviderInfos, err := commonapi.GetBabylonFinalityProviderInfos(exporter.CommonClient)
 	if err != nil {
-		return types.BabylonFinalityProviderUptimeStatues{}, errors.WithStack(err)
+		return types.BabylonFinalityProviderUptimeStatues{}, errors.Wrap(err, "failed to get babylon finality provider infos")
 	}
 	exporter.Debugf("got total finality providers: %d", len(finalityProviderInfos))
 
 	// 2. get latest height
 	latestBlockHeight, _, err := commonapi.GetStatus(exporter.CommonClient)
 	if err != nil {
-		return types.BabylonFinalityProviderUptimeStatues{}, errors.WithStack(err)
+		return types.BabylonFinalityProviderUptimeStatues{}, errors.Wrap(err, "failed to get babylon latest height")
 	}
 
 	exporter.Debugf("got latest block height: %d", latestBlockHeight)
@@ -27,7 +27,7 @@ func GetFinalityProviderUptime(exporter *common.Exporter) (types.BabylonFinality
 	// 3. get active finality providers.
 	activeProviders, err := commonapi.GetActiveFinalityProviderByHeight(exporter.CommonClient, latestBlockHeight)
 	if err != nil {
-		return types.BabylonFinalityProviderUptimeStatues{}, errors.WithStack(err)
+		return types.BabylonFinalityProviderUptimeStatues{}, errors.Wrap(err, "failed to get babylon active finality providers")
 	}
 
 	exporter.Debugf("got active finality providers: %d", len(activeProviders))
@@ -40,14 +40,14 @@ func GetFinalityProviderUptime(exporter *common.Exporter) (types.BabylonFinality
 	// 5. get lity providers' uptime status
 	finalityProviderUptimeStatus, err := commonapi.GetFinalityProviderUptime(exporter.CommonClient, newFinalityProviderInfos)
 	if err != nil {
-		return types.BabylonFinalityProviderUptimeStatues{}, errors.WithStack(err)
+		return types.BabylonFinalityProviderUptimeStatues{}, errors.Wrap(err, "failed to get babylon finality providers uptime")
 	}
 	exporter.Debugf("got active finality providers uptime status: %d", len(finalityProviderUptimeStatus))
 
 	// 6. get on-chain uptime parameter
 	signedBlocksWindow, minSignedPerWindow, err := commonapi.GetBabylonFinalityProviderParams(exporter.CommonClient)
 	if err != nil {
-		return types.BabylonFinalityProviderUptimeStatues{}, errors.WithStack(err)
+		return types.BabylonFinalityProviderUptimeStatues{}, errors.Wrap(err, "failed to get babylon finality provider parameters")
 	}
 
 	return types.BabylonFinalityProviderUptimeStatues{

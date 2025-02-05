@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
@@ -82,8 +83,8 @@ func GetBabylonFinalityProviderInfos(c common.CommonClient) ([]types.FinalityPro
 		fpInfoList = append(fpInfoList, fpInfos.FinalityProviders...)
 
 		if fpInfos.Pagination.NextKey != "" {
-			key = fpInfos.Pagination.NextKey
-			c.Debugf("there is next key, keep collecting finality providers")
+			key = url.QueryEscape(fpInfos.Pagination.NextKey)
+			c.Debugf("there is next key, keep collecting finality providers by using this path: %s", types.BabylonFinalityProviderInfosQueryPath(key))
 		} else {
 			// got all finality provider infos
 			c.Debugf("collected all finality providers")
