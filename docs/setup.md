@@ -181,6 +181,25 @@ chains:
         grpc: 'grpc-axelar.endpoint.xyz:9090'
 ```
 
+## Example Using Environment Variables
+Environment variables can be used to inject values into the configuration file. 
+For this a simple template variable marked by `${}` (e.g. `${SUPER_SECRET_ENV_VAR}`) can be added to the config file.
+
+```yaml
+monikers: ['all']
+
+chains:
+  - display_name: 'cosmos'
+    chain_id: cosmoshub-4
+    tracking_addresses:
+      - 'cosmos1clpqr4nrk4khgkxj78fcwwh6dl3uw4ep4tgu9q'
+      - '${THIS_IS_ALSO_AN_ENV_VAR}'
+    nodes:
+      - rpc: 'https://rpc-cosmos.endpoint.xyz/${SUPER_SECRET_TOKEN}'
+        api: 'https://lcd-cosmos.endpoint.xyz/${ANOTHER_ENV_VAR}'
+        grpc: 'grpc-cosmos.endpoint.xyz:9090'
+```
+
 ## Example: Supporting Custom Chain
 
 For devents, testnets, localnet even if unsupported mainnets, Use `custom_chains.yaml` for CVMS

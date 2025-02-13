@@ -15,6 +15,7 @@ var (
 		"veindexer",
 		"babylon_checkpoint",
 		"finality-provider-indexer",
+		"babylon-btc-lightclient",
 	}
 
 	ExporterPackages = []string{

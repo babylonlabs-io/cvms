@@ -35,7 +35,7 @@ func Build(port string, l *logrus.Logger, cfg *config.MonitoringConfig, sc *conf
 	}
 
 	if app == common.VALIDATOR && len(cfg.Monikers) < 1 {
-		return nil, errors.New("in cosmostation-exporter mode, you must add monike into the moniker flag")
+		return nil, errors.New("in cosmostation-exporter mode, you must add moniker into the moniker flag")
 	}
 
 	registry.MustRegister(common.Skip, common.Health, common.Ops)

@@ -17,9 +17,6 @@ var (
 	_ common.CollectorLoop  = loop
 )
 
-// NOTE: this is for solo mode
-var packageMonikers []string
-
 const (
 	Subsystem                    = "uptime"
 	SubsystemSleep               = 10 * time.Second
@@ -32,7 +29,6 @@ const (
 
 func Start(p common.Packager) error {
 	if ok := helper.Contains(types.SupportedProtocolTypes, p.ProtocolType); ok {
-		packageMonikers = p.Monikers
 		exporter := common.NewExporter(p)
 		for _, rpc := range p.RPCs {
 			exporter.SetRPCEndPoint(rpc)
@@ -164,7 +160,7 @@ func loop(exporter *common.Exporter, p common.Packager) {
 		} else {
 			// update metrics by each validators
 			for _, item := range status.Validators {
-				if ok := helper.Contains(packageMonikers, item.Moniker); ok {
+				if ok := helper.Contains(p.Monikers, item.Moniker); ok {
 					uptimeMetric.
 						With(prometheus.Labels{
 							common.ValidatorAddressLabel: item.ValidatorOperatorAddress,

@@ -71,3 +71,13 @@ func ParserFinalityParams(resp []byte) (float64, float64, error) {
 
 	return signedBlocksWindow, minSignedPerWindow, nil
 }
+
+func ParserBTCLightClientParams(resp []byte) ([]string, error) {
+	var result types.BabylonBTCLightClientParams
+	err := json.Unmarshal(resp, &result)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return result.Params.InsertHeadersAllowList, nil
+}

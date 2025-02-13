@@ -193,3 +193,25 @@ func GetBabylonFinalityProviderParams(c common.CommonClient) (float64, float64, 
 
 	return signedBlocksWindow, minSignedPerWindow, nil
 }
+
+func GetBabylonBTCLightClientParams(c common.CommonClient) ([]string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
+	defer cancel()
+
+	requester := c.APIClient.R().SetContext(ctx)
+	resp, err := requester.Get(types.BabylonBTCLightClientParamsQueryPath)
+	if err != nil {
+		return nil, errors.Errorf("rpc call is failed from %s: %s", resp.Request.URL, err)
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		return nil, errors.Errorf("stanage status code from %s: [%d]", resp.Request.URL, resp.StatusCode())
+	}
+
+	allowList, err := parser.ParserBTCLightClientParams(resp.Body())
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return allowList, nil
+}

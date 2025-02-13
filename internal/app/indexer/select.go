@@ -4,6 +4,7 @@ import (
 	"github.com/cosmostation/cvms/internal/common"
 	"github.com/cosmostation/cvms/internal/helper"
 	"github.com/cosmostation/cvms/internal/helper/config"
+	btclcindexer "github.com/cosmostation/cvms/internal/packages/babylon-btc-lightclient/indexer"
 	bcindexer "github.com/cosmostation/cvms/internal/packages/consensus/babylon-checkpoint/indexer"
 	veindexer "github.com/cosmostation/cvms/internal/packages/consensus/veindexer/indexer"
 	voteindexer "github.com/cosmostation/cvms/internal/packages/consensus/voteindexer/indexer"
@@ -116,6 +117,18 @@ func selectPackage(
 			return errors.Wrap(err, common.ErrFailedToBuildPackager)
 		}
 		return fpindexer.Start()
+	case pkg == "babylon-btc-lightclient":
+		endpoints := common.Endpoints{RPCs: validRPCs, CheckRPC: true, APIs: validAPIs, CheckAPI: true}
+		p, err := common.NewPackager(m, f, l, mainnet, chainID, chainName, pkg, protocolType, cc, endpoints, monikers...)
+		if err != nil {
+			return errors.Wrap(err, common.ErrFailedToBuildPackager)
+		}
+		p.SetIndexerDB(idb)
+		btclcindexer, err := btclcindexer.NewBTCLightClientIndexer(*p)
+		if err != nil {
+			return errors.Wrap(err, common.ErrFailedToBuildPackager)
+		}
+		return btclcindexer.Start()
 	}
 
 	return common.ErrUnSupportedPackage

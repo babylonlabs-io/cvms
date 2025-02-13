@@ -66,9 +66,11 @@ func (repo *MetaRepository) InsertValidatorInfoList(validatorInfoList []model.Va
 	_, err := repo.NewInsert().
 		Model(&validatorInfoList).
 		ExcludeColumn("id").
+		On("CONFLICT (chain_info_id, operator_address) DO UPDATE").
+		Set("hex_address = EXCLUDED.hex_address").
 		Exec(ctx)
 	if err != nil {
-		return errors.Wrapf(err, "failed to insert validator info list")
+		return errors.Wrapf(err, "failed to insert validator info list: %v", validatorInfoList)
 	}
 
 	return nil

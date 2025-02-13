@@ -19,6 +19,11 @@ chains:
       - 'cosmos1xxx'
       - 'cosmos1xxx'
       - 'cosmos1xxx'
+    # NOTE: if you write monikers here, the moniker will be override by these value
+    # in this case, for only cosmos chains, the CVMS will make a metrics for Figment validator.
+    # by this feature, you can compare validator performance with yours and others.
+    monikers:
+      - 'Figment'
     nodes:
       # NOTE: currently grpc endpoint doesn't support ssl
       - rpc: 'http://localhost:26657'

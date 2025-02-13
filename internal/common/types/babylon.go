@@ -79,3 +79,11 @@ type FinalityProvidersResponse struct {
 var BabylonFinalityVotesQueryPath = func(height int64) string {
 	return fmt.Sprintf("/babylon/finality/v1/votes/%d", height)
 }
+
+var BabylonBTCLightClientParamsQueryPath string = "/babylon/btclightclient/v1/params"
+
+type BabylonBTCLightClientParams struct {
+	Params struct {
+		InsertHeadersAllowList []string `json:"insert_headers_allow_list"`
+	} `json:"params"`
+}

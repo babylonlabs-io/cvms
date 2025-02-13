@@ -186,6 +186,7 @@ type ConsensusPubkey struct {
 }
 
 // ccv module
+// Returns the list of validators of a specific consumer chain
 var (
 	ProviderValidatorsQueryPath = func(consumerID string) string {
 		return fmt.Sprintf("/interchain_security/ccv/provider/consumer_validators/%s", consumerID)
@@ -207,6 +208,9 @@ type ProviderValidator struct {
 	Jailed                 bool   `json:"jailed"`
 }
 
+// see https://buf.build/cosmos/interchain-security/docs/main:interchain_security.ccv.provider.v1#interchain_security.ccv.provider.v1.QueryConsumerChainsRequest
+// The phase of the consumer chains returned (optional)
+// Registered=1|Initialized=2|Launched=3|Stopped=4|Deleted=5
 var ConsumerChainListQueryPath string = "/interchain_security/ccv/provider/consumer_chains/3"
 
 type CosmosConsumerChainsResponse struct {

@@ -49,12 +49,98 @@
       "type": "text"
     },
     {
+      "datasource": {
+        "default": false,
+        "type": "grafana-postgresql-datasource",
+        "uid": "cvms_indexer_db"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "id": 11,
+      "options": {
+        "allData": {},
+        "config": {},
+        "data": [],
+        "imgFormat": "png",
+        "layout": {
+          "font": {
+            "family": "Inter, Helvetica, Arial, sans-serif"
+          },
+          "margin": {
+            "b": 0,
+            "l": 0,
+            "r": 0,
+            "t": 0
+          },
+          "title": {
+            "automargin": true
+          },
+          "xaxis": {
+            "automargin": true,
+            "autorange": true,
+            "type": "date"
+          },
+          "yaxis": {
+            "automargin": true,
+            "autorange": true
+          }
+        },
+        "onclick": "// Event handling\n/*\n// 'data', 'variables', 'options', 'utils', and 'event' are passed as arguments\n\ntry {\n  const { type: eventType, data: eventData } = event;\n  const { timeZone, dayjs, locationService, getTemplateSrv } = utils;\n\n  switch (eventType) {\n    case 'click':\n      console.log('Click event:', eventData.points);\n      break;\n    case 'select':\n      console.log('Selection event:', eventData.range);\n      break;\n    case 'zoom':\n      console.log('Zoom event:', eventData);\n      break;\n    default:\n      console.log('Unhandled event type:', eventType, eventData);\n  }\n\n  console.log('Current time zone:', timeZone);\n  console.log('From time:', dayjs(variables.__from).format());\n  console.log('To time:', dayjs(variables.__to).format());\n\n  // Example of using locationService\n  // locationService.partial({ 'var-example': 'test' }, true);\n\n} catch (error) {\n  console.error('Error in onclick handler:', error);\n}\n*/\n  ",
+        "resScale": 2,
+        "script": "// Extracting the SQL data\nlet series = data.series[0];  // Access the data series\nif (!series || series.length === 0 || series.fields[0].values.length === 0) {\n  // Query result has no records, so skip the chart rendering\n  return {\n      data: [],\n    layout: {\n      title: 'No Data Available',\n      height: 10, // Reduce panel height\n      margin: {\n        l: 20,  // Left margin\n        r: 20,  // Right margin\n        t: 40,  // Top margin\n        b: 40   // Bottom margin\n      }\n    }\n  };\n}\n// Start data processing\nlet height = series.fields[0];  \nlet voted = series.fields[1];   \nlet moniker = series.fields[2]; \nlet btc_headers = series.fields[3];\n\n// Get unique monikers and heights from the dataset for rows and columns\nlet uniqueMonikers = [...new Set(moniker.values)].sort().reverse();  // Unique monikers for Y-axis\nlet uniqueHeights = [...new Set(height.values)].sort().reverse();    // Unique block heights for X-axis\n\n// Initialize the 2D array (zValues) for the heatmap, default to 0 (Inactive)\nlet zValues = Array(uniqueMonikers.length).fill(null).map(() => Array(uniqueHeights.length).fill(0));\nlet hoverText = Array(uniqueMonikers.length).fill(null).map(() => Array(uniqueHeights.length).fill(\"\"));\n\nfor (let i = 0; i < height.values.length; i++) {\n  let rowIndex = uniqueMonikers.indexOf(moniker.values[i]);  \n  let colIndex = uniqueHeights.indexOf(height.values[i]);    \n  zValues[rowIndex][colIndex] = voted.values[i];  \n  let headers = btc_headers.values[i];\n  hoverText[rowIndex][colIndex] = `x: ${height.values[i]}<br>y: ${moniker.values[i]}<br>z: ${voted.values[i]}<br>btc_headers: ${headers}}`; \n}\n\n// Define a continuous color scale for smoother transitions\nlet colorScale = [\n  [0, 'rgba(128, 128, 128, 0.5)'],\n  [0.33, 'rgba(0, 0, 0, 0.5)'],\n  [0.66, 'rgba(255, 255, 0, 0.5)'], \n  [1, 'rgba(255, 255, 0, 0.5)'],\n];\n\n\n// Return the heatmap configuration for Plotly\nreturn {\n  data: [{\n    z: zValues,               // 2D array of statuses (0, 1, 2, 3)\n    x: uniqueHeights,         // Block heights for X-axis\n    y: uniqueMonikers,        // Monikers for Y-axis\n    type: 'heatmap',          // Plotly heatmap type\n    colorscale: colorScale,   // Use only two colors for discrete values\n    showscale: false,         // Hide the color scale bar\n    zmin: 0,                  // Set the minimum value for z (status)\n    zmax: 3,                  // Set the maximum value for z (status)\n    xgap: 5,                  // Add gap between cells along the X-axis (adjust the value for bigger gaps)\n    ygap: 5,                   // Add gap between cells along the Y-axis (adjust the value for bigger gaps)    \n    text: hoverText,          // Set the hoverText for the heatmap\n    hoverinfo: 'text'         // Display the hoverText    \n  }],\n  layout: {\n    xaxis: {\n      type: 'category',\n      tickmode: 'linear',\n      showgrid: true,          // Ensure gridlines on X-axis\n      tickformat: '.0f',\n      tickangle: -45,          // Rotate labels for better readability\n    },\n    yaxis: {\n      tickmode: 'array',        // Use tickmode 'array' to manually set Y-axis labels\n      tickvals: uniqueMonikers, // Set tick values to all unique monikers\n      ticktext: uniqueMonikers, // Display all monikers as text on Y-axis\n      showgrid: true            // Ensure gridlines on Y-axis\n    },\n    margin: {\n      l: 200,  // Adjust margin for longer moniker names\n      t: 20,   // Reduce top margin\n      b: 120,  // Adjust bottom margin for X-axis labels\n    }\n  }\n};\n",
+        "syncTimeRange": false,
+        "timeCol": ""
+      },
+      "pluginVersion": "1.8.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "cvms_indexer_db"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": ";  -- Order in ascending order for the last 100 blocks\nWITH max_height AS (\n  SELECT MAX(height) AS highest_height\n  FROM babylon_btc_lightclient_${chain_id}\n)\nSELECT\n  bbl.height, -- height, header_count, btc_headers.\n  bbl.header_count,\n  vi.operator_address as address,\n  bbl.btc_headers\nFROM\n  babylon_btc_lightclient_${chain_id} bbl\nJOIN\n  meta.validator_info vi\n  ON bbl.reporter_id = vi.id\nJOIN\n  max_height mh  -- Join to get the maximum block height\n  ON bbl.height BETWEEN (mh.highest_height - 1000) AND mh.highest_height\nORDER BY height asc",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "BTC LightClient Reporter Status",
+      "transparent": true,
+      "type": "nline-plotlyjs-panel"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 4
+        "y": 10
       },
       "id": 7,
       "panels": [],
@@ -75,7 +161,7 @@
         "h": 34,
         "w": 12,
         "x": 0,
-        "y": 5
+        "y": 11
       },
       "id": 1,
       "options": {
@@ -233,7 +319,7 @@
         "h": 34,
         "w": 12,
         "x": 12,
-        "y": 5
+        "y": 11
       },
       "id": 10,
       "options": {
@@ -274,7 +360,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 39
+        "y": 45
       },
       "id": 5,
       "panels": [],
@@ -295,7 +381,7 @@
         "h": 40,
         "w": 12,
         "x": 0,
-        "y": 40
+        "y": 46
       },
       "id": 8,
       "options": {
@@ -382,7 +468,7 @@
         "h": 40,
         "w": 12,
         "x": 12,
-        "y": 40
+        "y": 46
       },
       "id": 4,
       "options": {

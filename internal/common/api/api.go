@@ -291,8 +291,8 @@ func GetConsumerChainHRP(c common.CommonClient) (string, error) {
 
 // query a new block to find missed validators index
 func GetBlockResults(c common.CommonClient, height int64) (
-	[]types.BlockEvent,
-	[]types.BlockEvent,
+	/* txs events */ []types.BlockEvent,
+	/* block events */ []types.BlockEvent,
 	/* unexpected error */ error,
 ) {
 

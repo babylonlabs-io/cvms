@@ -4,64 +4,62 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/pkg/errors"
-
+	"github.com/cosmostation/cvms/internal/common"
+	indexertypes "github.com/cosmostation/cvms/internal/common/indexer/types"
 	"github.com/cosmostation/cvms/internal/helper"
 	"github.com/cosmostation/cvms/internal/helper/db"
 	"github.com/cosmostation/cvms/internal/helper/healthcheck"
-
-	"github.com/cosmostation/cvms/internal/common"
-	indexertypes "github.com/cosmostation/cvms/internal/common/indexer/types"
-	"github.com/cosmostation/cvms/internal/packages/consensus/babylon-checkpoint/repository"
+	"github.com/cosmostation/cvms/internal/packages/babylon-btc-lightclient/repository"
+	"github.com/pkg/errors"
 )
 
-var subsystem = "babylon_checkpoint"
+var (
+	subsystem                 = "babylon_btc_lightclient"
+	_         common.IIndexer = (*BTCLightClientIndexer)(nil)
+)
 
-type CheckpointIndexer struct {
+type BTCLightClientIndexer struct {
 	*common.Indexer
-	repo                repository.CheckpointIndexerRepository
+	repository.BTCLightClientIndexerRepository
 	earliestBlockHeight int64
-	lastDBEpoch         int64
 }
 
-var _ common.IIndexer = (*CheckpointIndexer)(nil)
-
-func NewCheckpointIndexer(p common.Packager) (*CheckpointIndexer, error) {
+func NewBTCLightClientIndexer(p common.Packager) (*BTCLightClientIndexer, error) {
 	status := helper.GetOnChainStatus(p.RPCs, p.ProtocolType)
 	if status.ChainID == "" {
-		return nil, errors.Errorf("failed to create a new checkpoint indexer: %v", status)
+		return nil, errors.Errorf("failed to create a new indexer: %v", status)
 	}
 	indexer := common.NewIndexer(p, p.Package, status.ChainID)
-	repo := repository.NewRepository(*p.IndexerDB, indexertypes.SQLQueryMaxDuration)
+	repo := repository.NewRepository(*p.IndexerDB, subsystem, indexertypes.SQLQueryMaxDuration)
 	indexer.Lh = indexertypes.LatestHeightCache{LatestHeight: status.BlockHeight}
-	return &CheckpointIndexer{indexer, repo, status.EarliestBlockHeight, 0}, nil
+	return &BTCLightClientIndexer{indexer, repo, status.EarliestBlockHeight}, nil
 }
 
-func (idx *CheckpointIndexer) Start() error {
+// NOTE: Babylon operates a Bitcoin light client that stores Bitcoin chain headers.
+// The light client is maintained up to date by the Vigilante (more specifically, the Vigilante Reporter), which tracks BTC state and submits the latest BTC headers to Babylon.
+// Ensuring that the BTC light client is up to date and can recover from Bitcoin re-orgs is very important for both the BTC Staking and the BTC Timestamping protocols.
+// The CVMS tool will index the Babylon node events BTCRollForward and BTCRollBack
+func (idx *BTCLightClientIndexer) Start() error {
 	err := idx.InitChainInfoID()
 	if err != nil {
 		return errors.Wrap(err, "failed to init chain_info_id")
 	}
 
-	alreadyInit, err := idx.repo.CheckIndexpoinerAlreadyInitialized(repository.IndexName, idx.ChainInfoID)
+	alreadyInit, err := idx.CheckIndexpoinerAlreadyInitialized(idx.IndexName, idx.ChainInfoID)
 	if err != nil {
 		return errors.Wrap(err, "failed to check init tables")
 	}
 	if !alreadyInit {
 		idx.Warnf("it's not initialized in the database, so that this package will initalize at %d as a init index point", idx.Lh.LatestHeight)
-		idx.repo.InitPartitionTablesByChainInfoID(repository.IndexName, idx.ChainID, idx.earliestBlockHeight)
+		// idx.InitPartitionTablesByChainInfoID(idx.IndexName, idx.ChainID, idx.Lh.LatestHeight)
+		idx.InitPartitionTablesByChainInfoID(idx.IndexName, idx.ChainID, idx.earliestBlockHeight)
+		idx.CreateValidatorInfoPartitionTableByChainID(idx.ChainID)
 	}
 
 	// get last index pointer, index pointer is always initalize if not exist
-	initIndexPointer, err := idx.repo.GetLastIndexPointerByIndexTableName(repository.IndexName, idx.ChainInfoID)
+	initIndexPointer, err := idx.GetLastIndexPointerByIndexTableName(idx.IndexName, idx.ChainInfoID)
 	if err != nil {
 		return errors.Wrap(err, "failed to get last index pointer")
-	}
-
-	// get last epoch and save into indexer struct
-	lastDBEpoch, err := idx.repo.GetLastEpoch()
-	if err != nil {
-		return errors.WithStack(err)
 	}
 
 	err = idx.FetchValidatorInfoList()
@@ -69,17 +67,21 @@ func (idx *CheckpointIndexer) Start() error {
 		return errors.Wrap(err, "failed to fetch validator_info list")
 	}
 
-	idx.Infof("loaded last db epoch: %d, index pointer: %d, loaded validator id map: %d", lastDBEpoch, initIndexPointer.Pointer, len(idx.Vim))
+	idx.Infof("loaded index pointer(last saved height): %d", initIndexPointer.Pointer)
+	idx.Infof("initial vim length: %d for %s chain", len(idx.Vim), idx.ChainID)
 
 	// init indexer metrics
 	idx.initLabelsAndMetrics()
-
-	// NOTE: no need to sync lastest height in babylon checkpoint indexer
-	// go fetch new height in loop, it must be after init metrics
 	// go idx.FetchLatestHeight()
-
-	// loop
-	go idx.Loop(lastDBEpoch)
+	go idx.Loop(initIndexPointer.Pointer)
+	// loop update recent miss counter metrics
+	// go func() {
+	// 	for {
+	// 		idx.Infoln("update recent miss counter metrics and sleep 5s sec...")
+	// 		idx.updateRecentMissCounterMetric()
+	// 		time.Sleep(time.Second * 5)
+	// 	}
+	// }()
 	// loop partion table time retention by env parameter
 	go func() {
 		if idx.RetentionPeriod == db.PersistenceMode {
@@ -88,14 +90,14 @@ func (idx *CheckpointIndexer) Start() error {
 		}
 		for {
 			idx.Infof("for time retention, delete old records over %s and sleep %s", idx.RetentionPeriod, indexertypes.RetentionQuerySleepDuration)
-			idx.repo.DeleteOldValidatorExtensionVoteList(idx.ChainID, idx.RetentionPeriod)
+			idx.DeleteOldRecords(idx.ChainID, idx.RetentionPeriod)
 			time.Sleep(indexertypes.RetentionQuerySleepDuration)
 		}
 	}()
 	return nil
 }
 
-func (idx *CheckpointIndexer) Loop(indexPoint int64) {
+func (idx *BTCLightClientIndexer) Loop(indexPoint int64) {
 	isUnhealth := false
 	for {
 		// node health check
@@ -123,15 +125,14 @@ func (idx *CheckpointIndexer) Loop(indexPoint int64) {
 				continue
 			}
 		}
+
 		// trying to sync with new index pointer height
 		newIndexPointer, err := idx.batchSync(indexPoint)
 		if err != nil {
 			common.Health.With(idx.RootLabels).Set(0)
 			common.Ops.With(idx.RootLabels).Inc()
 			isUnhealth = true
-			idx.Errorf("failed to sync status in %d epoch: %s, it will be retried after sleep %s...",
-				indexPoint, err, indexertypes.AfterFailedRetryTimeout.String(),
-			)
+			idx.Errorf("failed to sync in %d height: %s, it will be retried after sleep %s...", indexPoint, err, indexertypes.AfterFailedFetchSleepDuration.String())
 			time.Sleep(indexertypes.AfterFailedRetryTimeout)
 			continue
 		}
@@ -142,14 +143,27 @@ func (idx *CheckpointIndexer) Loop(indexPoint int64) {
 		// update health and ops
 		common.Health.With(idx.RootLabels).Set(1)
 		common.Ops.With(idx.RootLabels).Inc()
+
+		// logging & sleep
+		if idx.Lh.LatestHeight > indexPoint {
+			// when node catching_up is true, sleep 100 milli sec
+			idx.WithField("catching_up", true).
+				Infof("latest height is %d but updated index pointer is %d ... remaining %d blocks", idx.Lh.LatestHeight, indexPoint, (idx.Lh.LatestHeight - indexPoint))
+			time.Sleep(indexertypes.CatchingUpSleepDuration)
+		} else {
+			// when node already catched up, sleep 5 sec
+			idx.WithField("catching_up", false).
+				Infof("updated index pointer to %d and sleep %s sec...", indexPoint, indexertypes.DefaultSleepDuration.String())
+			time.Sleep(indexertypes.DefaultSleepDuration)
+		}
 	}
 }
 
 // insert chain-info into chain_info table
-func (idx *CheckpointIndexer) InitChainInfoID() error {
+func (idx *BTCLightClientIndexer) InitChainInfoID() error {
 	isNewChain := false
 	var chainInfoID int64
-	chainInfoID, err := idx.repo.SelectChainInfoIDByChainID(idx.ChainID)
+	chainInfoID, err := idx.SelectChainInfoIDByChainID(idx.ChainID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			idx.Infof("this is new chain id: %s", idx.ChainID)
@@ -160,7 +174,7 @@ func (idx *CheckpointIndexer) InitChainInfoID() error {
 	}
 
 	if isNewChain {
-		chainInfoID, err = idx.repo.InsertChainInfo(idx.ChainName, idx.ChainID, idx.Mainnet)
+		chainInfoID, err = idx.InsertChainInfo(idx.ChainName, idx.ChainID, idx.Mainnet)
 		if err != nil {
 			return errors.Wrap(err, "failed to insert new chain_info_id by chain-id")
 		}
@@ -170,16 +184,18 @@ func (idx *CheckpointIndexer) InitChainInfoID() error {
 	return nil
 }
 
-func (idx *CheckpointIndexer) FetchValidatorInfoList() error {
+func (idx *BTCLightClientIndexer) FetchValidatorInfoList() error {
 	// get already saved validator-set list for mapping validators ids
-	validatorInfoList, err := idx.repo.GetValidatorInfoListByChainInfoID(idx.ChainInfoID)
+	validatorInfoList, err := idx.GetValidatorInfoListByChainInfoID(idx.ChainInfoID)
 	if err != nil {
 		return errors.Wrap(err, "failed to get validator info list")
 	}
 
 	// when the this pacakge starts, set validator-id map
 	for _, validator := range validatorInfoList {
-		idx.Vim[validator.HexAddress] = int64(validator.ID)
+		if validator.Moniker == "Babylon Vigilante Reporter" {
+			idx.Vim[validator.OperatorAddress] = int64(validator.ID)
+		}
 	}
 
 	return nil

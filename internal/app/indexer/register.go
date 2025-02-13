@@ -22,11 +22,17 @@ func register(m common.Mode, f promauto.Factory, l *logrus.Logger, idb *common.I
 		protocolType := chain.ProtocolType
 		isConsumer := chain.Consumer
 
+		monikers := mc.Monikers
+		if cc.Monikers != nil {
+			l.Debugf("found individual moniker list: %v for chain: %v", cc.Monikers, chain.ChainName)
+			monikers = cc.Monikers
+		}
+
 		for _, pkg := range packages {
 			// only register indexer packages among config packages
 			if ok := helper.Contains(common.IndexPackages, pkg); ok {
 				// all package is going to register
-				err := selectPackage(m, f, l, idb, mainnet, chainID, chainName, pkg, protocolType, isConsumer, cc, mc.Monikers)
+				err := selectPackage(m, f, l, idb, mainnet, chainID, chainName, pkg, protocolType, isConsumer, cc, monikers)
 				if err != nil {
 					l.WithField("package", pkg).WithField("chain", chainName).WithField("chain_id", chainID).
 						Errorf("this package was failed to start while initiating, so that the package will be skipped: %s", err)

@@ -24,6 +24,13 @@ func register(m common.Mode, f promauto.Factory, l *logrus.Logger, mc *config.Mo
 		packages := chain.Packages
 		protocolType := chain.ProtocolType
 		isConsumer := chain.Consumer
+		monikers := mc.Monikers
+		if cc.Monikers != nil {
+			l.Debugf("found individual moniker list: %v for chain: %v", cc.Monikers, chain.ChainName)
+			monikers = cc.Monikers
+		}
+
+		// get balance denomination and decimal
 
 		balanceDenom := chain.SupportAsset.Denom
 		balanceDecimal := chain.SupportAsset.Decimal
@@ -40,7 +47,7 @@ func register(m common.Mode, f promauto.Factory, l *logrus.Logger, mc *config.Mo
 			if ok := helper.Contains(common.ExporterPackages, pkg); ok {
 				if PackageFilter == "" {
 					// all package is going to register
-					err := selectPackage(m, f, l, mainnet, chainID, chainName, pkg, protocolType, balanceDenom, balanceDecimal, isConsumer, cc, mc.Monikers)
+					err := selectPackage(m, f, l, mainnet, chainID, chainName, pkg, protocolType, balanceDenom, balanceDecimal, isConsumer, cc, monikers)
 					if err != nil {
 						l.WithField("package", pkg).WithField("chain", cc.ChainID).Errorf("this package is skipped by %s", err)
 						common.Skip.With(prometheus.Labels{
@@ -54,7 +61,7 @@ func register(m common.Mode, f promauto.Factory, l *logrus.Logger, mc *config.Mo
 				} else if strings.Contains(string(pkg), PackageFilter) {
 					// specific package is going to register by 'PackageFilter' variable
 					l.Debugf("filterd package %s for %s", pkg, chainName)
-					err := selectPackage(m, f, l, mainnet, chainID, chainName, pkg, protocolType, balanceDenom, balanceDecimal, isConsumer, cc, mc.Monikers)
+					err := selectPackage(m, f, l, mainnet, chainID, chainName, pkg, protocolType, balanceDenom, balanceDecimal, isConsumer, cc, monikers)
 					if err != nil {
 						l.WithField("package", pkg).WithField("chain", chainName).Infof("this package is skipped by %s", err)
 						common.Skip.With(prometheus.Labels{

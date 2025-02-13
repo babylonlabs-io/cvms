@@ -143,3 +143,49 @@ func TestGetSupportChainConfigForConsumerChains(t *testing.T) {
 		}
 	}
 }
+
+func TestReplacePlaceholders(t *testing.T) {
+	yamlCfg := `
+chains:
+  - display_name: "band"
+    chain_id: "laozi-mainnet"
+    monikers:
+      - "test"
+    nodes:
+      - rpc: "${RPC_NODE1}"
+        api: "${API_NODE1}"
+        grpc: "${GRPC_NODE1}"
+      - rpc: "${RPC_NODE2}"
+        api: "${API_NODE2}"
+        grpc: "${GRPC_NODE2}"
+`
+	envVars := map[string]string{
+		"RPC_NODE1":  "https://rpc.bandchain.org",
+		"API_NODE1":  "https://api.bandchain.org",
+		"GRPC_NODE1": "https://grpc.bandchain."}
+
+	envVarsNotSet := []string{
+		"RPC_NODE2",
+		"API_NODE2",
+		"GRPC_NODE2",
+	}
+
+	for key, value := range envVars {
+		os.Setenv(key, value)
+	}
+
+	replaceCfg := replacePlaceholders([]byte(yamlCfg))
+
+	replaceCfgStr := string(replaceCfg)
+
+	// test if unset palceholders were not replaced
+	for _, key := range envVarsNotSet {
+		assert.Contains(t, replaceCfgStr, fmt.Sprintf("${%s}", key))
+	}
+
+	// test if set palceholders were replaced
+	for key, value := range envVars {
+		assert.NotContains(t, replaceCfgStr, fmt.Sprintf("%s: %s", key, value))
+	}
+
+}

@@ -178,6 +178,7 @@ bbn-test-5:
     - uptime
     - voteindexer
     - babylon_checkpoint
+    - babylon-btc-lightclient
     - finality-provider-indexer
     - finality-provider-uptime
 bitcanna-1:
@@ -838,7 +839,7 @@ neutron-1:
     - uptime
     - voteindexer
     - veindexer
-nillion:
+nillion-1:
   chain_name: nillion
   protocol_type: cosmos
   mainnet: true

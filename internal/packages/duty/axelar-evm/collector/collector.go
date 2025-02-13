@@ -19,9 +19,6 @@ var (
 	_ common.CollectorLoop  = loop
 )
 
-// NOTE: this is for solo mode
-var packageMonikers []string
-
 const (
 	Subsystem      = "axelar_evm"
 	SubsystemSleep = 60 * time.Second
@@ -33,7 +30,6 @@ const (
 
 func Start(p common.Packager) error {
 	if ok := helper.Contains(types.SupportedChains, p.ChainName); ok {
-		packageMonikers = p.Monikers
 		for _, api := range p.APIs {
 			exporter := common.NewExporter(p)
 			exporter.SetAPIEndPoint(api)
@@ -113,7 +109,7 @@ func loop(c *common.Exporter, p common.Packager) {
 		} else {
 			// filter metrics for only specific validator
 			for _, item := range status.Validators {
-				if ok := helper.Contains(packageMonikers, item.Moniker); ok {
+				if ok := helper.Contains(p.Monikers, item.Moniker); ok {
 					maintainerMetric.
 						With(prometheus.Labels{
 							common.ValidatorAddressLabel: item.ValidatorOperatorAddress,

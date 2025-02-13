@@ -178,7 +178,6 @@ func initSchemaFromDir(db *bun.DB, dir string) error {
 		if _, err := db.Exec(string(sqlBytes)); err != nil {
 			return fmt.Errorf("failed to execute schema file %s: %w", file, err)
 		}
-		log.Printf("Executed schema file: %s", file)
 	}
 	return nil
 }

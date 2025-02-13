@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -22,6 +23,7 @@ type ChainConfig struct {
 	TrackingAddresses []string       `yaml:"tracking_addresses,omitempty"`
 	Nodes             []NodeEndPoint `yaml:"nodes"`
 	ProviderNodes     []NodeEndPoint `yaml:"provider_nodes"`
+	Monikers          []string       `yaml:"monikers,omitempty"`
 }
 
 // each chain's available node list
@@ -31,12 +33,34 @@ type NodeEndPoint struct {
 	GRPC string `yaml:"grpc"`
 }
 
+func replacePlaceholders(byteString []byte) []byte {
+	// Simple function to replace placeholders in the config file with their corresponding environment variables.
+	// Variables take the form of ${VAR_NAME}
+
+	// Convert the byte slice to a string
+	cfg := string(byteString)
+
+	// Regular expression to match placeholders in the format ${VAR_NAME}
+	re := regexp.MustCompile(`\$\{([a-zA-Z_][a-zA-Z0-9_]*)\}`)
+
+	cfg = re.ReplaceAllStringFunc(cfg, func(match string) string {
+		varName := re.FindStringSubmatch(match)[1]
+		if value, exists := os.LookupEnv(varName); exists {
+			return value
+		}
+		return match // return original placeholder if not found in environment variables
+	})
+	return []byte(cfg)
+}
+
 // TODO: ignore failed chains
 func GetConfig(path string) (*MonitoringConfig, error) {
 	dataBytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to read config file")
 	}
+
+	dataBytes = replacePlaceholders(dataBytes)
 
 	cfg := &MonitoringConfig{}
 	err = yaml.Unmarshal(dataBytes, cfg)

@@ -19,9 +19,6 @@ var (
 	_ common.CollectorLoop  = loop
 )
 
-// NOTE: this is for solo mode
-var packageMonikers []string
-
 // Due to the nature of how request misses are tracked and counted,
 // the list of all misses collected in the previous iteration is kept in memory
 var yodaRequestMisses = make([]types.ValidatorStatus, 0)
@@ -68,7 +65,6 @@ const (
 func Start(p common.Packager) error {
 	if ok := helper.Contains(types.SupportedChains, p.ChainName); ok {
 		exporter := common.NewExporter(p)
-		packageMonikers = p.Monikers
 		for _, rpc := range p.RPCs {
 			exporter.SetRPCEndPoint(rpc)
 			break
@@ -210,7 +206,7 @@ func loop(c *common.Exporter, p common.Packager) {
 		} else {
 			// filter metrics for only specific validator
 			for _, item := range status.Validators {
-				if ok := helper.Contains(packageMonikers, item.Moniker); ok {
+				if ok := helper.Contains(p.Monikers, item.Moniker); ok {
 					yodaStatusMetrics.
 						With(prometheus.Labels{
 							common.ValidatorAddressLabel: item.ValidatorOperatorAddress,
