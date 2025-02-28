@@ -3,11 +3,14 @@ CREATE TABLE IF NOT EXISTS "public"."babylon_btc_lightclient" (
         "chain_info_id" INT NOT NULL,
         "height" BIGINT NOT NULL,
         "reporter_id" INT NOT NULL,
-        "header_count" SMALLINT NOT NULL, 
+        "roll_forward_count" SMALLINT NOT NULL, 
+        "roll_back_count" SMALLINT NOT NULL, 
+        "btc_height" BIGINT NOT NULL,
+        "is_roll_back" BOOLEAN NOT NULL,
         "btc_headers" TEXT NOT NUll,
         PRIMARY KEY ("id", "chain_info_id"),
         CONSTRAINT fk_chain_info_id FOREIGN KEY (chain_info_id) REFERENCES meta.chain_info (id) ON DELETE CASCADE ON UPDATE CASCADE,
-        CONSTRAINT fk_reporter_id FOREIGN KEY (reporter_id, chain_info_id) REFERENCES meta.validator_info (id, chain_info_id),
+        CONSTRAINT fk_reporter_id FOREIGN KEY (reporter_id, chain_info_id) REFERENCES meta.vigilante_info (id, chain_info_id),
         CONSTRAINT uniq_babylon_btc_lightclient_by_height UNIQUE ("chain_info_id","height","reporter_id")
     )
 PARTITION BY

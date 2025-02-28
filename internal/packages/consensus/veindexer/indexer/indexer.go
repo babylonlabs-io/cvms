@@ -48,7 +48,7 @@ func (veidx *VEIndexer) Start() error {
 			return errors.Wrap(err, "failed to init chain_info_id")
 		}
 
-		alreadyInit, err := veidx.repo.CheckIndexpoinerAlreadyInitialized(repository.IndexName, veidx.ChainInfoID)
+		alreadyInit, err := veidx.repo.CheckIndexPointerAlreadyInitialized(repository.IndexName, veidx.ChainInfoID)
 		if err != nil {
 			return errors.Wrap(err, "failed to check init tables")
 		}
@@ -90,7 +90,7 @@ func (veidx *VEIndexer) Start() error {
 		// loop update recent miss counter metrics
 		go func() {
 			for {
-				veidx.Infoln("update recent miss counter metrics and sleep 5s sec...")
+				veidx.Debugln("update recent miss counter metrics and sleep 5s sec...")
 				veidx.updateRecentMissCounterMetric()
 				time.Sleep(time.Second * 5)
 			}

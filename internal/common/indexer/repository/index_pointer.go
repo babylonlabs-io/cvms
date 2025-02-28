@@ -85,7 +85,7 @@ func (repo *MetaRepository) GetLastIndexPointerByIndexTableName(indexTableName s
 	return ip, nil
 }
 
-func (repo *MetaRepository) CheckIndexpoinerAlreadyInitialized(indexTableName string, chainInfoID int64) (bool, error) {
+func (repo *MetaRepository) CheckIndexPointerAlreadyInitialized(indexTableName string, chainInfoID int64) (bool, error) {
 	ctx := context.Background()
 	defer ctx.Done()
 

@@ -55,6 +55,8 @@ func StartExporterCmd() *cobra.Command {
 			logColorDisable := cmd.Flag(LogColorDisable).Value.String()
 			configfile := cmd.Flag(Config).Value.String()
 			port := cmd.Flag(Port).Value.String()
+			packageFilter := cmd.Flag(PackageFilter).Value.String()
+			exporter.PackageFilter = packageFilter
 
 			cfg, err := config.GetConfig(configfile)
 			if err != nil {
@@ -113,6 +115,8 @@ func StartIndexerCmd() *cobra.Command {
 			logColorDisable := cmd.Flag(LogColorDisable).Value.String()
 			configfile := cmd.Flag(Config).Value.String()
 			port := cmd.Flag(Port).Value.String()
+			packageFilter := cmd.Flag(PackageFilter).Value.String()
+			indexer.PackageFilter = packageFilter
 
 			cfg, err := config.GetConfig(configfile)
 			if err != nil {

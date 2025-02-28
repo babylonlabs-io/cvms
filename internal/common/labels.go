@@ -20,4 +20,7 @@ const (
 	BalanceAddressLabel      = "balance_address"
 	UpgradeNameLabel         = "upgrade_name"
 	BTCPKLabel               = "btc_pk"
+	JailedLabel              = "jailed"
+	ActiveLabel              = "active"
+	StatusLabel              = "status"
 )

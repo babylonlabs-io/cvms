@@ -55,6 +55,8 @@ type FinalityProviderInfo struct {
 	} `json:"description"`
 	Address string `json:"addr"`
 	BTCPK   string `json:"btc_pk"`
+	Jailed  bool   `json:"jailed"`
+	Active  bool
 }
 
 var BabylonFinalityProvidersQueryPath = func(height int64) string {
@@ -85,5 +87,27 @@ var BabylonBTCLightClientParamsQueryPath string = "/babylon/btclightclient/v1/pa
 type BabylonBTCLightClientParams struct {
 	Params struct {
 		InsertHeadersAllowList []string `json:"insert_headers_allow_list"`
+	} `json:"params"`
+}
+
+var BabylonCovenantCommitteeParamsQueryPath string = "/babylon/btcstaking/v1/params"
+
+type CovenantCommitteeParams struct {
+	Params struct {
+		CovenantPks                  []string `json:"covenant_pks"`
+		CovenantQuorum               int      `json:"covenant_quorum"`
+		MinStakingValueSat           string   `json:"min_staking_value_sat"`
+		MaxStakingValueSat           string   `json:"max_staking_value_sat"`
+		MinStakingTimeBlocks         int      `json:"min_staking_time_blocks"`
+		MaxStakingTimeBlocks         int      `json:"max_staking_time_blocks"`
+		SlashingPkScript             string   `json:"slashing_pk_script"`
+		MinSlashingTxFeeSat          string   `json:"min_slashing_tx_fee_sat"`
+		SlashingRate                 string   `json:"slashing_rate"`
+		UnbondingTimeBlocks          int      `json:"unbonding_time_blocks"`
+		UnbondingFeeSat              string   `json:"unbonding_fee_sat"`
+		MinCommissionRate            string   `json:"min_commission_rate"`
+		DelegationCreationBaseGasFee string   `json:"delegation_creation_base_gas_fee"`
+		AllowListExpirationHeight    string   `json:"allow_list_expiration_height"`
+		BtcActivationHeight          int      `json:"btc_activation_height"`
 	} `json:"params"`
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"strconv"
 	"sync"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/cosmostation/cvms/internal/common/parser"
 	"github.com/cosmostation/cvms/internal/common/types"
 	"github.com/cosmostation/cvms/internal/helper"
-	fputypes "github.com/cosmostation/cvms/internal/packages/duty/finality-provider-uptime/types"
+	fputypes "github.com/cosmostation/cvms/internal/packages/babylon/finality-provider/types"
 	"github.com/pkg/errors"
 )
 
@@ -109,10 +110,27 @@ func GetFinalityProviderUptime(c common.CommonClient, fpInfoList []types.Finalit
 		moniker := item.Description.Moniker
 		Address := item.Address
 		BTCPK := item.BTCPK
+		jailed := item.Jailed
+		active := item.Active
 		queryPath := types.BabylonFinalityProviderSigninInfoQueryPath(item.BTCPK)
 		go func(ch chan helper.Result) {
 			defer helper.HandleOutOfNilResponse(c.Entry)
 			defer wg.Done()
+
+			if !active {
+				ch <- helper.Result{
+					Success: true,
+					Item: fputypes.FinalityProviderUptimeStatus{
+						Moniker:            moniker,
+						Address:            Address,
+						BTCPK:              BTCPK,
+						MissedBlockCounter: 0,
+						Jailed:             strconv.FormatBool(jailed),
+						Active:             strconv.FormatBool(active),
+					}}
+
+				return
+			}
 
 			resp, err := requester.Get(queryPath)
 			if err != nil {
@@ -145,6 +163,8 @@ func GetFinalityProviderUptime(c common.CommonClient, fpInfoList []types.Finalit
 					Address:            Address,
 					BTCPK:              BTCPK,
 					MissedBlockCounter: missedBlockCounter,
+					Jailed:             strconv.FormatBool(jailed),
+					Active:             strconv.FormatBool(active),
 				}}
 		}(ch)
 		time.Sleep(10 * time.Millisecond)
@@ -214,4 +234,26 @@ func GetBabylonBTCLightClientParams(c common.CommonClient) ([]string, error) {
 	}
 
 	return allowList, nil
+}
+
+func GetBalbylonCovenantCommiteeParams(c common.CommonClient) ([]string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
+	defer cancel()
+
+	requester := c.APIClient.R().SetContext(ctx)
+	resp, err := requester.Get(types.BabylonCovenantCommitteeParamsQueryPath)
+	if err != nil {
+		return []string{}, errors.Errorf("rpc call is failed from %s: %s", resp.Request.URL, err)
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		return []string{}, errors.Errorf("stanage status code from %s: [%d]", resp.Request.URL, resp.StatusCode())
+	}
+
+	covenantCommittee, err := parser.ParserCovenantCommiteeParams(resp.Body())
+	if err != nil {
+		return []string{}, errors.WithStack(err)
+	}
+
+	return covenantCommittee, nil
 }

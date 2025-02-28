@@ -1,27 +1,20 @@
 groups:
   - name: UptimePackage
     rules:
-      # - alert: IncreasingMissCounterOver30%During1h
-      #   expr: |
-      #     # 30mins ago, the validator is unjailed. but got jailed 
-      #     cvms_uptime_jailed - cvms_uptime_jailed offset 30m > 0 and (cvms_uptime_jailed offset 30m == 0)
-      #   labels:
-      #     severity: critical
-      #   annotations:
-      #     summary: The validator is jailed now in {{ $labels.chain_id }}
+      # NOTE: for weekly uptime checking
+      # sort_desc(delta(cvms_uptime_missed_blocks_counter[1h]) / on (chain_id) group_left max by (chain_id) (delta(cvms_block_height[1h])) * 100 > 0)
 
-      # - alert: UptimeMissCounterIsIncreasing10%During1h
-      #   expr: |
-      #     # miss counter during 1h / blocks during 1h
-      #     (delta(cvms_uptime_missed_blocks_counter[1h]) / on (chain_id) group_left max by (chain_id) (delta(cvms_block_height[1h]))) > 0.1
-      #   labels:
-      #     severity: critical
-      #   annotations:
-      #     summary: The Validator's uptime is decreasing now! Check your validator in {{ $labels.chain }}-{{ $labels.chain_id }} network
+      - alert: IncreasingConsensusMissCounterOver10%During1h
+        expr: (delta(cvms_uptime_missed_blocks_counter[1h]) / on (chain_id) group_left max by (chain_id) (delta(cvms_block_height[1h]))) * 100 > 5
+        labels:
+          severity: warning
+        annotations:
+          summary: 'In {{ $labels.chain }}-{{ $labels.chain_id }} network, The Validator have missed some blocks'
+          description: '{{ $labels.moniker }} had missed some blocks for consensus. Please check your node or signer status'
 
       # - alert: Remaining1000BlocksBeforeGettingSlashing
+      #   # max missed - current missed 
       #   expr: |
-      #     # max missed - current missed 
       #     ceil(cvms_uptime_signed_blocks_window * (1 - cvms_uptime_min_signed_per_window)) - on (chain_id) group_right () cvms_uptime_missed_blocks_counter < 1000
       #   labels:
       #     severity: critical

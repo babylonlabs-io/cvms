@@ -28,7 +28,7 @@ func TestMain(m *testing.M) {
 }
 
 func Test_GetTablesRecords(t *testing.T) {
-	_, err := metarepo.CheckIndexpoinerAlreadyInitialized("", 0)
+	_, err := metarepo.CheckIndexPointerAlreadyInitialized("", 0)
 	assert.NoError(t, err)
 }
 

@@ -1,0 +1,22 @@
+groups:
+  - name: AxelarEVMPackage
+    rules:
+      - alert: AxelarEVMChainMaintainerInactive
+        expr: cvms_axelar_evm_maintainer_status == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Axelar EVM Maintainer for `{{ $labels.evm_chain }}` is inactive in {{ $labels.chain_id }}'
+
+  - name: AxelarAmplifierVerifierPackage
+    rules:
+      - alert: AmplifierVerifierFailedVoting
+        expr: cvms_axelar_amplifier_verifier_poll_vote{chain_id='axelar-dojo-1',status!~"SucceededOnChain"} - (cvms_axelar_amplifier_verifier_poll_vote offset 10m) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Axelar Amplifier Verifer Missed vote in {{ $labels.chain_id }}'
+          description: |
+            In {{ $labels.chain_id }}, {{ $labels.verifier }} did not vote for some chains. 
+            Check it now <https://public-cvms.cosmostation.io/d/axelar_dashboard/axelar-dashboard|here>

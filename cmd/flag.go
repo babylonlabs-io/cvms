@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"github.com/cosmostation/cvms/internal/app/exporter"
 	"github.com/spf13/pflag"
 )
 
@@ -60,8 +59,7 @@ func PortFlag() *pflag.FlagSet {
 func FilterFlag() *pflag.FlagSet {
 	flag := &pflag.FlagSet{}
 
-	flag.StringVar(
-		&exporter.PackageFilter,
+	flag.String(
 		PackageFilter,
 		"",
 		"default is null\nonly one package running when you want to run specific package",

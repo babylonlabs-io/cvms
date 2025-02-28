@@ -4,11 +4,19 @@ import (
 	"github.com/cosmostation/cvms/internal/common"
 	"github.com/cosmostation/cvms/internal/helper"
 	"github.com/cosmostation/cvms/internal/helper/config"
-	btclcindexer "github.com/cosmostation/cvms/internal/packages/babylon-btc-lightclient/indexer"
-	bcindexer "github.com/cosmostation/cvms/internal/packages/consensus/babylon-checkpoint/indexer"
+
+	// axelar specific
+	aavindexer "github.com/cosmostation/cvms/internal/packages/axelar/amplifier-verifier/indexer"
+
+	// babylon specfic
+	btclcindexer "github.com/cosmostation/cvms/internal/packages/babylon/btc-lightclient/indexer"
+	bcindexer "github.com/cosmostation/cvms/internal/packages/babylon/checkpoint/indexer"
+	bcsindexer "github.com/cosmostation/cvms/internal/packages/babylon/covenant-committee/indexer"
+	bfpindexer "github.com/cosmostation/cvms/internal/packages/babylon/finality-provider/indexer"
+
+	// cosmos native
 	veindexer "github.com/cosmostation/cvms/internal/packages/consensus/veindexer/indexer"
 	voteindexer "github.com/cosmostation/cvms/internal/packages/consensus/voteindexer/indexer"
-	fpindexer "github.com/cosmostation/cvms/internal/packages/duty/finality-provider-indexer/indexer"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/sirupsen/logrus"
@@ -83,7 +91,7 @@ func selectPackage(
 			return errors.Wrap(err, common.ErrFailedToBuildPackager)
 		}
 		return veindexer.Start()
-	case pkg == "babylon_checkpoint":
+	case pkg == "babylon-checkpoint":
 		endpoints := common.Endpoints{RPCs: validRPCs, CheckRPC: true, APIs: validAPIs, CheckAPI: true}
 		p, err := common.NewPackager(m, f, l, mainnet, chainID, chainName, pkg, protocolType, cc, endpoints, monikers...)
 		if err != nil {
@@ -100,7 +108,7 @@ func selectPackage(
 			return errors.Wrap(err, common.ErrFailedToBuildPackager)
 		}
 		return bcindexer.Start()
-	case pkg == "finality-provider-indexer":
+	case pkg == "babylon-finality-provider-indexer":
 		endpoints := common.Endpoints{RPCs: validRPCs, CheckRPC: true, APIs: validAPIs, CheckAPI: true}
 		p, err := common.NewPackager(m, f, l, mainnet, chainID, chainName, pkg, protocolType, cc, endpoints, monikers...)
 		if err != nil {
@@ -112,12 +120,16 @@ func selectPackage(
 			p.SetAddtionalEndpoints(providerEndpoints)
 			p.SetConsumer()
 		}
-		fpindexer, err := fpindexer.NewFinalityProviderIndexer(*p)
+		fpindexer, err := bfpindexer.NewFinalityProviderIndexer(*p)
 		if err != nil {
 			return errors.Wrap(err, common.ErrFailedToBuildPackager)
 		}
 		return fpindexer.Start()
 	case pkg == "babylon-btc-lightclient":
+		if m == common.VALIDATOR {
+			l.Infof("%s don't need to enable this package. CVMS will ignore %s package", m, pkg)
+			return nil
+		}
 		endpoints := common.Endpoints{RPCs: validRPCs, CheckRPC: true, APIs: validAPIs, CheckAPI: true}
 		p, err := common.NewPackager(m, f, l, mainnet, chainID, chainName, pkg, protocolType, cc, endpoints, monikers...)
 		if err != nil {
@@ -129,6 +141,34 @@ func selectPackage(
 			return errors.Wrap(err, common.ErrFailedToBuildPackager)
 		}
 		return btclcindexer.Start()
+	case pkg == "babylon-covenant-committee":
+		if m == common.VALIDATOR {
+			l.Infof("%s don't need to enable this package. CVMS will ignore %s package", m, pkg)
+			return nil
+		}
+		endpoints := common.Endpoints{RPCs: validRPCs, CheckRPC: true, APIs: validAPIs, CheckAPI: true}
+		p, err := common.NewPackager(m, f, l, mainnet, chainID, chainName, pkg, protocolType, cc, endpoints, monikers...)
+		if err != nil {
+			return errors.Wrap(err, common.ErrFailedToBuildPackager)
+		}
+		p.SetIndexerDB(idb)
+		csindexer, err := bcsindexer.NewCovenantSignatureIndexer(*p)
+		if err != nil {
+			return errors.Wrap(err, common.ErrFailedToBuildPackager)
+		}
+		return csindexer.Start()
+	case pkg == "axelar-amplifier-verifier":
+		endpoints := common.Endpoints{RPCs: validRPCs, CheckRPC: true, APIs: validAPIs, CheckAPI: true}
+		p, err := common.NewPackager(m, f, l, mainnet, chainID, chainName, pkg, protocolType, cc, endpoints, monikers...)
+		if err != nil {
+			return errors.Wrap(err, common.ErrFailedToBuildPackager)
+		}
+		p.SetIndexerDB(idb)
+		aavindexer, err := aavindexer.NewAxelarAmplifierVerifierIndexer(*p)
+		if err != nil {
+			return errors.Wrap(err, common.ErrFailedToBuildPackager)
+		}
+		return aavindexer.Start()
 	}
 
 	return common.ErrUnSupportedPackage

@@ -9,13 +9,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/sirupsen/logrus"
 
+	// babylon
+	fpcollector "github.com/cosmostation/cvms/internal/packages/babylon/finality-provider/collector"
+
 	// validator consensus packages
 	uptime "github.com/cosmostation/cvms/internal/packages/consensus/uptime/collector"
 
 	// validator duty packages
 	axelarevm "github.com/cosmostation/cvms/internal/packages/duty/axelar-evm/collector"
 	eventnonce "github.com/cosmostation/cvms/internal/packages/duty/eventnonce/collector"
-	fpuptime "github.com/cosmostation/cvms/internal/packages/duty/finality-provider-uptime/collector"
 	oracle "github.com/cosmostation/cvms/internal/packages/duty/oracle/collector"
 	yoda "github.com/cosmostation/cvms/internal/packages/duty/yoda/collector"
 
@@ -132,7 +134,7 @@ func selectPackage(
 			p.SetConsumer()
 		}
 		return uptime.Start(*p)
-	case pkg == "finality-provider-uptime":
+	case pkg == "babylon-finality-provider-uptime":
 		endpoints := common.Endpoints{
 			RPCs: validRPCs, CheckRPC: true,
 			APIs: validAPIs, CheckAPI: true,
@@ -141,7 +143,7 @@ func selectPackage(
 		if err != nil {
 			return errors.Wrap(err, common.ErrFailedToBuildPackager)
 		}
-		return fpuptime.Start(*p)
+		return fpcollector.Start(*p)
 	}
 	// NOTE: contract package is not using now, but it could be enabled if it needs
 	// case strings.Contains(packageName, "contract"):

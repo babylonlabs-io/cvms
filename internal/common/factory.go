@@ -43,6 +43,20 @@ var (
 		Name:      "processed_ops_total"},
 		DefaultLabels,
 	)
+
+	IndexPointerTimestamp = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: Namespace,
+		Subsystem: Subsystem,
+		Name:      "index_pointer_timestamp"},
+		DefaultLabels,
+	)
+
+	IndexPointer = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: Namespace,
+		Subsystem: Subsystem,
+		Name:      "index_pointer"},
+		DefaultLabels,
+	)
 )
 
 func BuildRootLabels(p Packager) prometheus.Labels {

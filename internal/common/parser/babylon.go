@@ -81,3 +81,19 @@ func ParserBTCLightClientParams(resp []byte) ([]string, error) {
 
 	return result.Params.InsertHeadersAllowList, nil
 }
+
+func ParserCovenantCommiteeParams(resp []byte) ([]string, error) {
+	var result types.CovenantCommitteeParams
+	newCovenantCommitee := make([]string, 0)
+
+	err := json.Unmarshal(resp, &result)
+	if err != nil {
+		return []string{}, errors.WithStack(err)
+	}
+
+	for _, member := range result.Params.CovenantPks {
+		newCovenantCommitee = append(newCovenantCommitee, member)
+	}
+
+	return newCovenantCommitee, nil
+}

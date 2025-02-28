@@ -7,44 +7,22 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+const (
+	RecentMissCounterMetricName = "recent_miss_counter"
+)
+
 func (vidx *VoteIndexer) initLabelsAndMetrics() {
-	indexPointerBlockHeightMetric := vidx.Factory.NewGauge(prometheus.GaugeOpts{
-		Namespace:   common.Namespace,
-		Subsystem:   subsystem,
-		Name:        common.IndexPointerBlockHeightMetricName,
-		ConstLabels: vidx.PackageLabels,
-	})
-	indexPointerBlockTimestampMetric := vidx.Factory.NewGauge(prometheus.GaugeOpts{
-		Namespace:   common.Namespace,
-		Subsystem:   subsystem,
-		Name:        common.IndexPointerBlockTimestampMetricName,
-		ConstLabels: vidx.PackageLabels,
-	})
-	latestBlockHeightMetric := vidx.Factory.NewGauge(prometheus.GaugeOpts{
-		Namespace:   common.Namespace,
-		Subsystem:   subsystem,
-		Name:        common.LatestBlockHeightMetricName,
-		ConstLabels: vidx.PackageLabels,
-	})
+
 	recentMissCounterMetric := vidx.Factory.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace:   common.Namespace,
 		Subsystem:   subsystem,
-		Name:        common.RecentMissCounterMetricName,
+		Name:        RecentMissCounterMetricName,
 		ConstLabels: vidx.PackageLabels,
 	}, []string{
 		common.MonikerLabel,
 	})
 
-	indexPointerBlockHeightMetric.Set(0)
-	vidx.MetricsMap[common.IndexPointerBlockHeightMetricName] = indexPointerBlockHeightMetric
-
-	indexPointerBlockTimestampMetric.Set(0)
-	vidx.MetricsMap[common.IndexPointerBlockTimestampMetricName] = indexPointerBlockTimestampMetric
-
-	latestBlockHeightMetric.Set(0)
-	vidx.MetricsMap[common.LatestBlockHeightMetricName] = latestBlockHeightMetric
-
-	vidx.MetricsVecMap[common.RecentMissCounterMetricName] = recentMissCounterMetric
+	vidx.MetricsVecMap[RecentMissCounterMetricName] = recentMissCounterMetric
 }
 
 func (vidx *VoteIndexer) updateRecentMissCounterMetric() {
@@ -54,14 +32,14 @@ func (vidx *VoteIndexer) updateRecentMissCounterMetric() {
 	}
 
 	for _, rvv := range rvvList {
-		vidx.MetricsVecMap[common.RecentMissCounterMetricName].
+		vidx.MetricsVecMap[RecentMissCounterMetricName].
 			With(prometheus.Labels{common.MonikerLabel: rvv.Moniker}).
 			Set(float64(rvv.MissedCount))
 	}
 }
 
-func (vidx *VoteIndexer) updatePrometheusMetrics(indexPointer int64, indexPointerTimestamp time.Time) {
-	vidx.MetricsMap[common.IndexPointerBlockHeightMetricName].Set(float64(indexPointer))
-	vidx.MetricsMap[common.IndexPointerBlockTimestampMetricName].Set((float64(indexPointerTimestamp.Unix())))
-	vidx.Debugf("update prometheus metrics %d height", indexPointer)
+func (idx *VoteIndexer) updateRootMetrics(indexPointer int64, indexPointerTimestamp time.Time) {
+	common.IndexPointer.With(idx.RootLabels).Set(float64(indexPointer))
+	common.IndexPointerTimestamp.With(idx.RootLabels).Set((float64(indexPointerTimestamp.Unix())))
+	idx.Debugf("update prometheus metrics %d height", indexPointer)
 }

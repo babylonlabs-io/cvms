@@ -28,7 +28,7 @@ func Build(port string, l *logrus.Logger, cfg *config.MonitoringConfig, sc *conf
 	}
 
 	// register root metircs
-	registry.MustRegister(common.Skip, common.Health, common.Ops)
+	registry.MustRegister(common.Skip, common.Health, common.Ops, common.IndexPointer, common.IndexPointerTimestamp)
 
 	// build prometheus server
 	indexerServer, factory := buildPrometheusExporter(port, l)
