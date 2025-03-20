@@ -179,11 +179,13 @@ bbn-test-5:
     - upgrade
     - uptime
     - voteindexer
+    - block-data-analytics
     - babylon-checkpoint
     - babylon-btc-lightclient
     - babylon-covenant-committee
     - babylon-finality-provider-indexer
     - babylon-finality-provider-uptime
+    - babylon-btc-delegations
 bitcanna-1:
   chain_name: bitcanna
   protocol_type: cosmos
@@ -436,6 +438,18 @@ dymension_1100-1:
     - upgrade
     - uptime
     - voteindexer
+deluge-1:
+  chain_name: zkcloud
+  protocol_type: cosmos
+  mainnet: true
+  support_asset:
+    denom: uproof
+    decimal: 6
+  packages:
+    - block
+    - upgrade
+    - uptime
+    - voteindexer    
 evmos_9000-4:
   chain_name: evmos
   protocol_type: cosmos
@@ -1230,6 +1244,18 @@ stride-1:
     - upgrade
     - uptime
     - voteindexer
+selfchain-testnet:
+  chain_name: selfchain
+  protocol_type: cosmos
+  mainnet: false
+  support_asset:
+    denom: uslf
+    decimal: 6
+  packages:
+    - block
+    - upgrade
+    - uptime
+    - voteindexer
 tabi_9788-2:
   chain_name: tabi
   protocol_type: cosmos
@@ -1315,6 +1341,18 @@ union-testnet-9:
     - upgrade
     - uptime
     - voteindexer    
+union-1:
+  chain_name: union
+  protocol_type: cosmos
+  mainnet: true
+  support_asset:
+    denom: ugas
+    decimal: 6
+  packages:
+    - block
+    - upgrade
+    - uptime
+    - voteindexer
 xion-mainnet-1:
   chain_name: xion
   protocol_type: cosmos
@@ -1339,6 +1377,18 @@ xion-testnet-1:
     - upgrade
     - uptime
     - voteindexer
+xrplevm_1449000-1:
+  chain_name: xrpl-evm
+  protocol_type: cosmos
+  mainnet: false
+  support_asset:
+    denom: axrp
+    decimal: 18
+  packages:
+    - block
+    - upgrade
+    - uptime
+    - voteindexer    
 zetachain_7000-1:
   chain_name: zeta
   protocol_type: cosmos

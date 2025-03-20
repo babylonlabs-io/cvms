@@ -293,6 +293,7 @@ func GetConsumerChainHRP(c common.CommonClient) (string, error) {
 func GetBlockResults(c common.CommonClient, height int64) (
 	/* txs events */ []types.BlockEvent,
 	/* block events */ []types.BlockEvent,
+	/* consensus param */ types.CosmosBlockData,
 	/* unexpected error */ error,
 ) {
 
@@ -305,19 +306,19 @@ func GetBlockResults(c common.CommonClient, height int64) (
 
 	resp, err := requester.Get(types.CosmosBlockResultsQueryPath(height))
 	if err != nil {
-		return nil, nil, errors.Errorf("rpc call is failed from %s: %s", resp.Request.URL, err)
+		return nil, nil, types.CosmosBlockData{}, errors.Errorf("rpc call is failed from %s: %s", resp.Request.URL, err)
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return nil, nil, errors.Errorf("stanage status code from %s: [%d]", resp.Request.URL, resp.StatusCode())
+		return nil, nil, types.CosmosBlockData{}, errors.Errorf("stanage status code from %s: [%d]", resp.Request.URL, resp.StatusCode())
 
 	}
 
-	txsEvents, blockEvents, err := parser.CosmosBlockResultsParser(resp.Body())
+	txsEvents, blockEvents, blockData, err := parser.CosmosBlockResultsParser(resp.Body())
 	if err != nil {
-		return nil, nil, errors.WithStack(err)
+		return nil, nil, types.CosmosBlockData{}, errors.WithStack(err)
 	}
 
-	return txsEvents, blockEvents, nil
+	return txsEvents, blockEvents, blockData, nil
 }
 
 // query block and txs data by using cosmos api endpoint

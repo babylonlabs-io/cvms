@@ -2,6 +2,7 @@ package indexer
 
 import (
 	"database/sql"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -11,47 +12,54 @@ import (
 
 	"github.com/cosmostation/cvms/internal/common"
 	indexertypes "github.com/cosmostation/cvms/internal/common/indexer/types"
-	"github.com/cosmostation/cvms/internal/packages/axelar/amplifier-verifier/repository"
+	"github.com/cosmostation/cvms/internal/packages/block-data-analytics/repository"
 )
 
 var (
-	subsystem                 = "axelar_amplifier_verifier"
-	_         common.IIndexer = (*AxelarAmplifierVerifierIndexer)(nil)
+	subTableName                     = "block_message_analytics"
+	subMetaTableName                 = "message_type"
+	_                common.IIndexer = (*BDAIndexer)(nil)
 )
 
-type AxelarAmplifierVerifierIndexer struct {
+// BDAIndexer means BlockDataAnalyticsIndexer
+type BDAIndexer struct {
+	subsystem           string
+	earliestBlockHeight int64
 	*common.Indexer
-	repository.AmplifierIndexerRepository
+	repository.BDAIndexerRepository
 }
 
-func NewAxelarAmplifierVerifierIndexer(p common.Packager) (*AxelarAmplifierVerifierIndexer, error) {
+func NewBDAIndexer(p common.Packager) (*BDAIndexer, error) {
+	subsystem := strings.ReplaceAll(p.Package, "-", "_")
 	status := helper.GetOnChainStatus(p.RPCs, p.ProtocolType)
 	if status.ChainID == "" {
 		return nil, errors.Errorf("failed to create new %s", subsystem)
 	}
-	indexer := common.NewIndexer(p, p.Package, status.ChainID)
+	indexer := common.NewIndexer(p, subsystem, status.ChainID)
 	repo := repository.NewRepository(*p.IndexerDB, subsystem, indexertypes.SQLQueryMaxDuration)
 	indexer.Lh = indexertypes.LatestHeightCache{LatestHeight: status.BlockHeight}
-	return &AxelarAmplifierVerifierIndexer{indexer, repo}, nil
+	return &BDAIndexer{subsystem, status.EarliestBlockHeight, indexer, repo}, nil
 }
 
-func (idx *AxelarAmplifierVerifierIndexer) Start() error {
+func (idx *BDAIndexer) Start() error {
 	err := idx.InitChainInfoID()
 	if err != nil {
 		return errors.Wrap(err, "failed to init chain_info_id")
 	}
 
-	alreadyInit, err := idx.CheckIndexPointerAlreadyInitialized(idx.IndexName, idx.ChainInfoID)
+	err = idx.CreatePartitionTableInMeta(subMetaTableName, idx.ChainID)
 	if err != nil {
-		return errors.Wrap(err, "failed to check init tables")
+		return errors.Wrap(err, "failed to init meta partition table")
 	}
-	if !alreadyInit {
-		idx.Warnf("it's not initialized in the database, so that this package will be init at %d", idx.Lh.LatestHeight)
-		idx.InitPartitionTablesByChainInfoID(idx.IndexName, idx.ChainID, idx.Lh.LatestHeight)
-		idx.CreateVerifierInfoPartitionTableByChainID(idx.ChainID)
+	err = idx.InitPartitionTablesByChainInfoID(idx.IndexName, idx.ChainID, idx.earliestBlockHeight)
+	if err != nil {
+		return errors.Wrap(err, "failed to init indexer partition table")
+	}
+	err = idx.InitPartitionTablesByChainInfoID(subTableName, idx.ChainID, idx.earliestBlockHeight)
+	if err != nil {
+		return errors.Wrap(err, "failed to init indexer partition table")
 	}
 
-	// get last index pointer, index pointer is always initalize if not exist
 	initIndexPointer, err := idx.GetLastIndexPointerByIndexTableName(idx.IndexName, idx.ChainInfoID)
 	if err != nil {
 		return errors.Wrap(err, "failed to get last index pointer")
@@ -62,24 +70,23 @@ func (idx *AxelarAmplifierVerifierIndexer) Start() error {
 		return errors.Wrap(err, "failed to fetch validator_info list")
 	}
 
-	idx.Infof("loaded index pointer: %d, loaded VIM ID map: %d Addr map: %d", initIndexPointer.Pointer, len(idx.Vim), len(idx.VAM))
+	idx.Infof("loaded index pointer: %d, loaded VIM length: %d VAM: %d", initIndexPointer.Pointer, len(idx.Vim), len(idx.VAM))
 
 	// init indexer metrics
-	idx.initLabelsAndMetrics()
-	// go fetch new height in loop, it must be after init metrics
+	idx.initMetrics()
 	go idx.FetchLatestHeight()
 	go idx.Loop(initIndexPointer.Pointer)
 	go func() {
 		for {
 			idx.Infof("for time retention, delete old records over %s and sleep %s", idx.RetentionPeriod, indexertypes.RetentionQuerySleepDuration)
-			idx.DeleteOldValidatorExtensionVoteList(idx.ChainID, idx.RetentionPeriod)
+			idx.DeleteOldRecords(idx.ChainID, idx.RetentionPeriod)
 			time.Sleep(indexertypes.RetentionQuerySleepDuration)
 		}
 	}()
 	return nil
 }
 
-func (idx *AxelarAmplifierVerifierIndexer) Loop(indexPoint int64) {
+func (idx *BDAIndexer) Loop(indexPoint int64) {
 	isUnhealth := false
 	for {
 		// node health check
@@ -114,9 +121,7 @@ func (idx *AxelarAmplifierVerifierIndexer) Loop(indexPoint int64) {
 			common.Health.With(idx.RootLabels).Set(0)
 			common.Ops.With(idx.RootLabels).Inc()
 			isUnhealth = true
-			idx.Errorf("failed to sync validators vote status in %d height: %s\nit will be retried after sleep %s...",
-				indexPoint, err, indexertypes.AfterFailedRetryTimeout.String(),
-			)
+			idx.Errorf("batch sync: %s. it will be retried after sleep %s...", err, indexertypes.AfterFailedRetryTimeout.String())
 			time.Sleep(indexertypes.AfterFailedRetryTimeout)
 			continue
 		}
@@ -141,8 +146,7 @@ func (idx *AxelarAmplifierVerifierIndexer) Loop(indexPoint int64) {
 	}
 }
 
-// insert chain-info into chain_info table
-func (idx *AxelarAmplifierVerifierIndexer) InitChainInfoID() error {
+func (idx *BDAIndexer) InitChainInfoID() error {
 	isNewChain := false
 	var chainInfoID int64
 	chainInfoID, err := idx.SelectChainInfoIDByChainID(idx.ChainID)
@@ -167,14 +171,14 @@ func (idx *AxelarAmplifierVerifierIndexer) InitChainInfoID() error {
 	return nil
 }
 
-func (idx *AxelarAmplifierVerifierIndexer) FetchValidatorInfoList() error {
-	verifierInfoList, err := idx.GetVerifierInfoListByChainInfoID(idx.ChainInfoID)
+func (idx *BDAIndexer) FetchValidatorInfoList() error {
+	messageTypeList, err := idx.GetMessageTypeListByChainInfoID(idx.ChainInfoID)
 	if err != nil {
 		return errors.Wrap(err, "failed to get validator info list")
 	}
-	for _, verifier := range verifierInfoList {
-		idx.Vim[verifier.VerifierAddress] = verifier.ID
-		idx.VAM[verifier.ID] = verifier.VerifierAddress
+	for _, msgType := range messageTypeList {
+		idx.Vim[msgType.MessageType] = msgType.ID
+		idx.VAM[msgType.ID] = msgType.MessageType
 	}
 	return nil
 }

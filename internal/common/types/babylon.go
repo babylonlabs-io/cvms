@@ -56,7 +56,9 @@ type FinalityProviderInfo struct {
 	Address string `json:"addr"`
 	BTCPK   string `json:"btc_pk"`
 	Jailed  bool   `json:"jailed"`
-	Active  bool
+	// injected
+	Active      bool
+	VotingPower float64
 }
 
 var BabylonFinalityProvidersQueryPath = func(height int64) string {
@@ -110,4 +112,72 @@ type CovenantCommitteeParams struct {
 		AllowListExpirationHeight    string   `json:"allow_list_expiration_height"`
 		BtcActivationHeight          int      `json:"btc_activation_height"`
 	} `json:"params"`
+}
+
+// ref; https://lcd-dapp.testnet.babylonlabs.io
+var BabylonBTCDelegationQuery = func(status BTCDelegationStatus) string {
+	return fmt.Sprintf("/babylon/btcstaking/v1/btc_delegations/%d?pagination.limit=1&pagination.count_total=true", status)
+}
+
+// ref; https://github.com/babylonlabs-io/babylon/blob/main/proto/babylon/btcstaking/v1/btcstaking.proto#L224
+type BTCDelegationStatus int
+
+func (s BTCDelegationStatus) String() string {
+	switch s {
+	case PENDING:
+		return "PENDING"
+	case VERIFIED:
+		return "VERIFIED"
+	case ACTIVE:
+		return "ACTIVE"
+	case UNBONDED:
+		return "UNBONDED"
+	case EXPIRED:
+		return "EXPIRED"
+	default:
+		return "UNKNOWN"
+	}
+}
+
+const (
+	// PENDING defines a delegation that is waiting for covenant signatures.
+	// PENDING = 0;
+	PENDING BTCDelegationStatus = iota
+
+	// VERIFIED defines a delegation that has covenant signatures but is not yet
+	// included in the BTC chain.
+	VERIFIED
+
+	// ACTIVE defines a delegation that has voting power
+	ACTIVE
+
+	// UNBONDED defines a delegation no longer has voting power
+	// by receiving unbonding tx with signatures from staker and covenant
+	// committee
+	UNBONDED
+
+	// EXPIRED defines a delegation no longer has voting power
+	// for reaching the end of staking transaction timelock
+	EXPIRED
+
+	// NOTE: we don't need to this status
+	// ANY is any of the above status
+	// ANY = 5;
+)
+
+type BTCDelegationsResponse struct {
+	BTCDelegations []interface{} `json:"btc_delegations"`
+	Pagination     Pagination    `json:"pagination"`
+}
+
+var BabylonLastFinalizedBlockLimitQueryPath = "/babylon/finality/v1/blocks?status=1&pagination.limit=1&pagination.reverse=true"
+
+type LastFinalityBlockResponse struct {
+	Blocks []struct {
+		Height    string `json:"height"`
+		AppHash   string `json:"app_hash"`
+		Finalized bool   `json:"finalized"`
+	} `json:"blocks"`
+
+	Pagination Pagination `json:"pagination"`
 }

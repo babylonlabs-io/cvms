@@ -213,17 +213,17 @@ func CosmosSlashingParamsParser(resp []byte) (signedBlocksWindow float64, minSig
 }
 
 // this function return two events but one of them will be empty events
-func CosmosBlockResultsParser(resp []byte) (txsEvents []types.BlockEvent, blockEvents []types.BlockEvent, err error) {
+func CosmosBlockResultsParser(resp []byte) (txsEvents []types.BlockEvent, blockEvents []types.BlockEvent, params types.CosmosBlockData, err error) {
 	var preResult map[string]interface{}
 	if err := json.Unmarshal(resp, &preResult); err != nil {
-		return nil, nil, err
+		return nil, nil, types.CosmosBlockData{}, err
 	}
 
 	_, ok := preResult["jsonrpc"].(string)
 	if ok {
 		var result types.CosmosBlockResultResponse
 		if err := json.Unmarshal(resp, &result); err != nil {
-			return nil, nil, err
+			return nil, nil, types.CosmosBlockData{}, err
 		}
 
 		txsEvents := make([]types.BlockEvent, 0)
@@ -237,10 +237,10 @@ func CosmosBlockResultsParser(resp []byte) (txsEvents []types.BlockEvent, blockE
 		blockEvents = append(blockEvents, result.Result.FinalizeBlockEvents...)
 
 		decodedTxsEvents, decodedBlockEvents := DecodeEventsInBlockResults(txsEvents, blockEvents)
-		return decodedTxsEvents, decodedBlockEvents, nil
+		return decodedTxsEvents, decodedBlockEvents, types.CosmosBlockData{TxResults: result.Result.TxsResults, ConsensusParamUpdates: result.Result.ConsensusParamUpdates}, nil
 	}
 
-	return nil, nil, errors.New("unexpected response data in block results")
+	return nil, nil, types.CosmosBlockData{}, errors.New("unexpected response data in block results")
 }
 
 func DecodeEventsInBlockResults(txsEvents []types.BlockEvent, blockEvents []types.BlockEvent) ([]types.BlockEvent, []types.BlockEvent) {
@@ -284,4 +284,20 @@ func decodeBase64IfPossible(text string) string {
 	}
 
 	return text
+}
+
+func CosmosConsensusmParamsParser(resp []byte) (float64, float64, error) {
+	var result types.CosmosConsensusParams
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return 0, 0, err
+	}
+	maxBytes, err := strconv.ParseFloat(result.Params.Block.MaxBytes, 64)
+	if err != nil {
+		return 0, 0, err
+	}
+	maxGas, err := strconv.ParseFloat(result.Params.Block.MaxGas, 64)
+	if err != nil {
+		return 0, 0, err
+	}
+	return maxBytes, maxGas, nil
 }

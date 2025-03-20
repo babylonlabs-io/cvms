@@ -2,6 +2,9 @@ package indexer
 
 import (
 	"database/sql"
+	"encoding/json"
+	"io"
+	"net/http"
 	"time"
 
 	"github.com/cosmostation/cvms/internal/common"
@@ -65,30 +68,32 @@ func (idx *CovenantSignatureIndexer) Start() error {
 		return errors.Wrap(err, "failed to get last index pointer")
 	}
 
+	// initialize babylon covenant committee
+	newCovenantCommitteeInfoList := []model.CovenantCommitteeInfo{}
+	covenantCommittee, err := commonapi.GetBalbylonCovenantCommiteeParams(idx.CommonClient)
+	if err != nil {
+		return errors.Wrap(err, "failed to get covenant committee params")
+	}
+	// request remote covenant mapping name
+	remoteCCMonikerMap := idx.getCovenantComitteeMoniker(idx.Mainnet)
+
+	for _, pk := range covenantCommittee {
+		moniker := "Unknown"
+		if value, ok := remoteCCMonikerMap[pk]; ok {
+			moniker = value
+		}
+
+		newCovenantCommitteeInfoList = append(newCovenantCommitteeInfoList, model.CovenantCommitteeInfo{
+			ChainInfoID:   idx.ChainInfoID,
+			CovenantBtcPk: pk,
+			Moniker:       moniker,
+		})
+	}
+
+	idx.csRepo.UpsertCovenantCommitteeInfoList(newCovenantCommitteeInfoList)
 	err = idx.FetchValidatorInfoList()
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch covenant committee list")
-	}
-
-	// initialize babylon covenant committee
-	if len(idx.covenantCommitteeMap) <= 0 {
-		newCovenantCommitteeInfoList := []model.CovenantCommitteeInfo{}
-		covenantCommittee, err := commonapi.GetBalbylonCovenantCommiteeParams(idx.CommonClient)
-		if err != nil {
-			return errors.Wrap(err, "failed to get covenant committee params")
-		}
-		for _, committee := range covenantCommittee {
-			newCovenantCommitteeInfoList = append(newCovenantCommitteeInfoList, model.CovenantCommitteeInfo{
-				ChainInfoID:   idx.ChainInfoID,
-				CovenantBtcPk: committee,
-			})
-		}
-
-		idx.csRepo.InsertCovenantCommitteeInfoList(newCovenantCommitteeInfoList)
-		err = idx.FetchValidatorInfoList()
-		if err != nil {
-			return errors.Wrap(err, "failed to fetch covenant committee list")
-		}
 	}
 
 	idx.Infof("loaded last index pointer: %d", initIndexPointer.Pointer)
@@ -223,4 +228,42 @@ func (idx *CovenantSignatureIndexer) FetchValidatorInfoList() error {
 	}
 
 	return nil
+}
+
+func (idx *CovenantSignatureIndexer) getCovenantComitteeMoniker(mainnet bool) map[string]string {
+	var resp *http.Response
+	var err error
+	if mainnet {
+		resp, err = http.Get(BabylonCovenantCommitteeMonikerFromMainnet)
+	} else {
+		resp, err = http.Get(BabylonCovenantCommitteeMonikerFromTestnet)
+	}
+
+	if err != nil {
+		idx.Infof("failed to fetch remove covenant committee: %s", err)
+		return map[string]string{}
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		idx.Infof("failed to fetch remove covenant committee JSON: %d", resp.StatusCode)
+		return map[string]string{}
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		idx.Infof("failed to read remote covenant committee moniker JSON: %s", err)
+		return nil
+	}
+
+	var remoteCCMonikerMap map[string]string
+
+	err = json.Unmarshal(body, &remoteCCMonikerMap)
+	if err != nil {
+		idx.Infof("failed to unmarshal Json: %d", resp.StatusCode)
+		return map[string]string{}
+	}
+
+	return remoteCCMonikerMap
 }

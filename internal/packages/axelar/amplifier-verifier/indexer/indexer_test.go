@@ -108,7 +108,7 @@ func Test_0_MakeLogic(t *testing.T) {
 	pollMap := make(PollMap)
 
 	for _, h := range testHeights {
-		txsEvents, _, err := api.GetBlockResults(app.CommonClient, h)
+		txsEvents, _, _, err := api.GetBlockResults(app.CommonClient, h)
 		assert.NoError(t, err)
 
 		polls := AmplifierPollStartFillter(txsEvents)

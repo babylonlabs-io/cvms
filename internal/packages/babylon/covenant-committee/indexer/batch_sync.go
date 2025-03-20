@@ -73,7 +73,7 @@ func (idx *CovenantSignatureIndexer) batchSync(lastIndexPointerHeight, newIndexP
 			}
 
 		RETRY2:
-			txsEvents, _, err := api.GetBlockResults(idx.CommonClient, height)
+			txsEvents, _, _, err := api.GetBlockResults(idx.CommonClient, height)
 			if err != nil {
 				idx.Errorf("failed to get block results by rpc, %s", err)
 				helper.ExponentialBackoff(&backoffTime)

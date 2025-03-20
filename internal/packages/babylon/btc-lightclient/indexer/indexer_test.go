@@ -40,7 +40,7 @@ func Test_1_GetBTCLightClientData(t *testing.T) {
 	testHeights := []int64{23921, 23828, 23922}
 
 	for _, h := range testHeights {
-		txsEvents, _, err := api.GetBlockResults(app.CommonClient, h)
+		txsEvents, _, _, err := api.GetBlockResults(app.CommonClient, h)
 		assert.NoError(t, err)
 
 		// NOTE: bieList means btc insert events list
@@ -150,7 +150,7 @@ func Test_4_ValidationLogic(t *testing.T) {
 
 	testHeight := int64(261439)
 	expectedReporter := "bbn1mzghl5csl75wz86e70j6ggdll4huazgfmeucyx"
-	txsEvents, _, err := api.GetBlockResults(app.CommonClient, testHeight)
+	txsEvents, _, _, err := api.GetBlockResults(app.CommonClient, testHeight)
 	assert.NoError(t, err)
 
 	// NOTE: bieList means btc insert events list

@@ -46,6 +46,7 @@ type CovenantCommitteeInfo struct {
 	bun.BaseModel `bun:"table:meta.covenant_committee_info"`
 	ID            int64  `bun:"id,pk,autoincrement"`
 	ChainInfoID   int64  `bun:"chain_info_id,pk,notnull"`
+	Moniker       string `bun:"moniker,notnull"`
 	CovenantBtcPk string `bun:"covenant_btc_pk"`
 }
 
@@ -130,4 +131,12 @@ func (ip IndexPointer) String() string {
 		ip.IndexName,
 		ip.Pointer,
 	)
+}
+
+type MessageType struct {
+	bun.BaseModel `bun:"table:meta.message_type"`
+
+	ID          int64  `bun:"id,pk,autoincrement"`
+	ChainInfoID int64  `bun:"chain_info_id,pk,notnull"`
+	MessageType string `bun:"message_type,unique:uniq_message_type_by_chain"`
 }

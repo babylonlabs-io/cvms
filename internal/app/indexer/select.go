@@ -15,6 +15,7 @@ import (
 	bfpindexer "github.com/cosmostation/cvms/internal/packages/babylon/finality-provider/indexer"
 
 	// cosmos native
+	bdaindexer "github.com/cosmostation/cvms/internal/packages/block-data-analytics/indexer"
 	veindexer "github.com/cosmostation/cvms/internal/packages/consensus/veindexer/indexer"
 	voteindexer "github.com/cosmostation/cvms/internal/packages/consensus/voteindexer/indexer"
 	"github.com/pkg/errors"
@@ -169,6 +170,18 @@ func selectPackage(
 			return errors.Wrap(err, common.ErrFailedToBuildPackager)
 		}
 		return aavindexer.Start()
+	case pkg == "block-data-analytics":
+		endpoints := common.Endpoints{RPCs: validRPCs, CheckRPC: true, APIs: validAPIs, CheckAPI: true}
+		p, err := common.NewPackager(m, f, l, mainnet, chainID, chainName, pkg, protocolType, cc, endpoints, monikers...)
+		if err != nil {
+			return errors.Wrap(err, common.ErrFailedToBuildPackager)
+		}
+		p.SetIndexerDB(idb)
+		bdaindexer, err := bdaindexer.NewBDAIndexer(*p)
+		if err != nil {
+			return errors.Wrap(err, common.ErrFailedToBuildPackager)
+		}
+		return bdaindexer.Start()
 	}
 
 	return common.ErrUnSupportedPackage

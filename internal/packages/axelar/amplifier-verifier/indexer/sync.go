@@ -57,7 +57,7 @@ func (idx *AxelarAmplifierVerifierIndexer) batchSync(lastIndexPoint int64) (
 			defer helper.HandleOutOfNilResponse(idx.Entry)
 			defer wg.Done()
 
-			txsEvents, _, err := api.GetBlockResults(idx.CommonClient, height)
+			txsEvents, _, _, err := api.GetBlockResults(idx.CommonClient, height)
 			if err != nil {
 				idx.Errorf("failed to call at %d height block results, %s", height, err)
 				ch <- helper.Result{Item: nil, Success: false}

@@ -12,10 +12,19 @@ groups:
       #       The block timestamp for the {{ $labels.chain }} chain at {{ $labels.endpoint }} has exceeded 60 seconds. Please check the synchronization status of the node.
 
       - alert: LastestBlockTimeDiffOver300s
-        expr: (time() - cvms_block_timestamp) > 300
+        expr: (time() - cvms_block_timestamp{chain!~'gravity-bridge'}) > 300
         labels:
           severity: critical
         annotations:
           summary: 'The {{ $labels.chain }}-{{ $labels.chain_id }} latest block timestamp has exceeded 5 minutes'
           description: |
             The block timestamp at {{ $labels.endpoint }} has exceeded 5 minutes. Please check the node's synchronization status immediately.
+
+      - alert: GravityBridgeBlockTimeDiffOver600s
+        expr: (time() - cvms_block_timestamp{chain='gravity-bridge'}) > 600
+        labels:
+          severity: critical
+        annotations:
+          summary: 'The {{ $labels.chain }}-{{ $labels.chain_id }} latest block timestamp has exceeded 10 minutes'
+          description: |
+            The block timestamp at {{ $labels.endpoint }} has exceeded 10 minutes. Please check the node's synchronization status immediately.

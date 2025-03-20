@@ -62,7 +62,7 @@ func register(m common.Mode, f promauto.Factory, l *logrus.Logger, mc *config.Mo
 				} else if strings.Contains(string(pkg), PackageFilter) {
 					err := selectPackage(m, f, l, mainnet, chainID, chainName, pkg, protocolType, balanceDenom, balanceDecimal, isConsumer, cc, monikers)
 					if err != nil {
-						l.WithField("package", pkg).WithField("chain", chainName).Infof("this package is skipped by %s", err)
+						l.WithField("package", pkg).WithField("chain", chainName).Errorf("this package is skipped by %s", err)
 						common.Skip.With(prometheus.Labels{
 							common.ChainLabel:   chainName,
 							common.ChainIDLabel: chainID,

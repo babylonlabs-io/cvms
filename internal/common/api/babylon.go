@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -112,6 +113,8 @@ func GetFinalityProviderUptime(c common.CommonClient, fpInfoList []types.Finalit
 		BTCPK := item.BTCPK
 		jailed := item.Jailed
 		active := item.Active
+		vp := item.VotingPower
+
 		queryPath := types.BabylonFinalityProviderSigninInfoQueryPath(item.BTCPK)
 		go func(ch chan helper.Result) {
 			defer helper.HandleOutOfNilResponse(c.Entry)
@@ -127,6 +130,7 @@ func GetFinalityProviderUptime(c common.CommonClient, fpInfoList []types.Finalit
 						MissedBlockCounter: 0,
 						Jailed:             strconv.FormatBool(jailed),
 						Active:             strconv.FormatBool(active),
+						VotingPower:        0,
 					}}
 
 				return
@@ -165,6 +169,7 @@ func GetFinalityProviderUptime(c common.CommonClient, fpInfoList []types.Finalit
 					MissedBlockCounter: missedBlockCounter,
 					Jailed:             strconv.FormatBool(jailed),
 					Active:             strconv.FormatBool(active),
+					VotingPower:        vp,
 				}}
 		}(ch)
 		time.Sleep(10 * time.Millisecond)
@@ -256,4 +261,131 @@ func GetBalbylonCovenantCommiteeParams(c common.CommonClient) ([]string, error) 
 	}
 
 	return covenantCommittee, nil
+}
+
+var delegationStatus = []types.BTCDelegationStatus{types.PENDING, types.VERIFIED, types.ACTIVE, types.UNBONDED, types.EXPIRED}
+
+type delegationResult struct {
+	status string
+	count  int64
+}
+
+func GetBabylonBTCDelegations(c common.CommonClient) (map[string]int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
+	defer cancel()
+
+	requester := c.APIClient.R().SetContext(ctx)
+
+	ch := make(chan helper.Result)
+	delegationResults := make([]delegationResult, 0)
+	wg := sync.WaitGroup{}
+
+	for _, ds := range delegationStatus {
+		status := ds
+		wg.Add(1)
+
+		go func(ch chan helper.Result, status types.BTCDelegationStatus) {
+			defer helper.HandleOutOfNilResponse(c.Entry)
+			defer wg.Done()
+
+			resp, err := requester.Get(types.BabylonBTCDelegationQuery(ds))
+			if err != nil {
+				if resp == nil {
+					c.Errorln("[panic] passed resp.Time() nil point err")
+					ch <- helper.Result{Item: nil, Success: false}
+					return
+				}
+				c.Errorf("api error: %s", err)
+				ch <- helper.Result{Item: nil, Success: false}
+				return
+			}
+
+			if resp.StatusCode() != http.StatusOK {
+				c.Errorf("api error: %d code from %s", resp.StatusCode(), resp.Request.URL)
+				ch <- helper.Result{Item: nil, Success: false}
+				return
+			}
+
+			count, err := parser.ParserBTCDelegations(resp.Body())
+			if err != nil {
+				c.Errorf("parsing failed: %s", err)
+				ch <- helper.Result{Item: nil, Success: false}
+				return
+			}
+
+			ch <- helper.Result{
+				Success: true,
+				Item: delegationResult{
+					status: status.String(),
+					count:  count,
+				},
+			}
+		}(ch, status)
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+
+	errorCount := 0
+	for r := range ch {
+		if r.Success {
+			delegationResults = append(delegationResults, r.Item.(delegationResult))
+			continue
+		}
+		errorCount++
+	}
+
+	if errorCount > 0 {
+		c.Errorf("current errors count: %d", errorCount)
+		return nil, common.ErrFailedHttpRequest
+	}
+
+	status := make(map[string]int64)
+	for _, item := range delegationResults {
+		status[item.status] = item.count
+	}
+
+	return status, nil
+}
+
+func GetLastFinalizedBlockHeight(c common.CommonClient) (int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
+	defer cancel()
+
+	requester := c.APIClient.R().SetContext(ctx)
+	resp, err := requester.Get(types.BabylonLastFinalizedBlockLimitQueryPath)
+	if err != nil {
+		return 0, errors.Errorf("rpc call is failed from %s: %s", resp.Request.URL, err)
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		return 0, errors.Errorf("stanage status code from %s: [%d]", resp.Request.URL, resp.StatusCode())
+	}
+
+	var result types.LastFinalityBlockResponse
+	err = json.Unmarshal(resp.Body(), &result)
+	if err != nil {
+		return 0, err
+	}
+
+	// check finalized and return last finalized height
+	for idx, b := range result.Blocks {
+		if !b.Finalized {
+			return 0, errors.New("unxpected finalized block")
+		}
+
+		lastFinalizedHeight, err := strconv.ParseInt(b.Height, 10, 64)
+		if err != nil {
+			return 0, err
+		}
+
+		if idx == 0 {
+			return lastFinalizedHeight, nil
+		}
+	}
+
+	return 0, errors.New("unxpected finalized block")
 }

@@ -68,6 +68,7 @@ CREATE TABLE
         "id" BIGINT GENERATED ALWAYS AS IDENTITY,
         "chain_info_id" INT NOT NULL,
         "covenant_btc_pk" VARCHAR(64) NOT NULL,
+        "moniker" VARCHAR(255) NOT NULL,
         CONSTRAINT fk_chain_info_id FOREIGN KEY (chain_info_id) REFERENCES meta.chain_info(id) ON DELETE CASCADE ON UPDATE CASCADE,
         PRIMARY KEY ("id", "chain_info_id"),
         CONSTRAINT uniq_covenant_btc_pk_by_chain UNIQUE (chain_info_id, covenant_btc_pk)
@@ -98,6 +99,18 @@ CREATE TABLE
         CONSTRAINT fk_chain_info_id FOREIGN KEY (chain_info_id) REFERENCES meta.chain_info(id) ON DELETE CASCADE ON UPDATE CASCADE,
         PRIMARY KEY ("id", "chain_info_id"),
         CONSTRAINT uniq_address_by_chain UNIQUE (chain_info_id, operator_address)
+    )
+PARTITION BY
+    LIST ("chain_info_id");
+
+CREATE TABLE
+    IF NOT EXISTS "meta"."message_type" (
+        "id" BIGINT GENERATED ALWAYS AS IDENTITY,
+        "chain_info_id" INT NOT NULL,
+        "message_type" TEXT NOT NULL,
+        CONSTRAINT fk_chain_info_id FOREIGN KEY (chain_info_id) REFERENCES meta.chain_info(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        PRIMARY KEY ("id", "chain_info_id"),
+        CONSTRAINT uniq_message_type_by_chain UNIQUE (chain_info_id, message_type)
     )
 PARTITION BY
     LIST ("chain_info_id");

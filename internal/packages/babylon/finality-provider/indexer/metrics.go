@@ -14,5 +14,4 @@ func (idx *FinalityProviderIndexer) updateRootMetrics(indexPointer int64) {
 	}
 	common.IndexPointerTimestamp.With(idx.RootLabels).Set((float64(timestamp.Unix())))
 	idx.Debugf("update prometheus metrics %d epoch", indexPointer)
-
 }

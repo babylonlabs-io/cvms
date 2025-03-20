@@ -51,7 +51,7 @@ func register(m common.Mode, f promauto.Factory, l *logrus.Logger, idb *common.I
 					l.Debugf("the package is filterd by package filter flag, only %s package is going to be register in indexer application", PackageFilter)
 					err := selectPackage(m, f, l, idb, mainnet, chainID, chainName, pkg, protocolType, isConsumer, cc, monikers)
 					if err != nil {
-						l.WithField("package", pkg).WithField("chain", chainName).Infof("this package is skipped by %s", err)
+						l.WithField("package", pkg).WithField("chain", chainName).Errorf("this package is skipped by %s", err)
 						common.Skip.With(prometheus.Labels{
 							common.ChainLabel:   chainName,
 							common.ChainIDLabel: chainID,

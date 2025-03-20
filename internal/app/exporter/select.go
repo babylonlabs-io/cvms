@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	// babylon
+	btcdelegations "github.com/cosmostation/cvms/internal/packages/babylon/btc-delegations"
 	fpcollector "github.com/cosmostation/cvms/internal/packages/babylon/finality-provider/collector"
 
 	// validator consensus packages
@@ -22,6 +23,7 @@ import (
 	yoda "github.com/cosmostation/cvms/internal/packages/duty/yoda/collector"
 
 	// health packages
+	bdacollector "github.com/cosmostation/cvms/internal/packages/block-data-analytics/collector"
 	block "github.com/cosmostation/cvms/internal/packages/health/block/collector"
 
 	// utility packages
@@ -144,6 +146,26 @@ func selectPackage(
 			return errors.Wrap(err, common.ErrFailedToBuildPackager)
 		}
 		return fpcollector.Start(*p)
+	case pkg == "babylon-btc-delegations":
+		endpoints := common.Endpoints{
+			RPCs: validRPCs, CheckRPC: true,
+			APIs: validAPIs, CheckAPI: true,
+		}
+		p, err := common.NewPackager(m, f, l, mainnet, chainID, chainName, pkg, protocolType, cc, endpoints, monikers...)
+		if err != nil {
+			return errors.Wrap(err, common.ErrFailedToBuildPackager)
+		}
+		return btcdelegations.Start(*p)
+	case pkg == "block-data-analytics":
+		endpoints := common.Endpoints{
+			RPCs: validRPCs, CheckRPC: true,
+			APIs: validAPIs, CheckAPI: true,
+		}
+		p, err := common.NewPackager(m, f, l, mainnet, chainID, chainName, pkg, protocolType, cc, endpoints, monikers...)
+		if err != nil {
+			return errors.Wrap(err, common.ErrFailedToBuildPackager)
+		}
+		return bdacollector.Start(*p)
 	}
 	// NOTE: contract package is not using now, but it could be enabled if it needs
 	// case strings.Contains(packageName, "contract"):
