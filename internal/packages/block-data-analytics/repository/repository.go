@@ -65,12 +65,14 @@ func (repo *BDAIndexerRepository) InsertBlockDataList(
 				return errors.Wrapf(err, "failed to insert data")
 			}
 
-			_, err = tx.NewInsert().
-				Model(&blockMessageList).
-				ExcludeColumn("id").
-				Exec(ctx)
-			if err != nil {
-				return errors.Wrapf(err, "failed to insert data")
+			if len(blockMessageList) > 0 {
+				_, err = tx.NewInsert().
+					Model(&blockMessageList).
+					ExcludeColumn("id").
+					Exec(ctx)
+				if err != nil {
+					return errors.Wrapf(err, "failed to insert data")
+				}
 			}
 
 			_, err = tx.

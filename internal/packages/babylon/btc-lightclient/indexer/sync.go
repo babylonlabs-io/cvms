@@ -102,7 +102,7 @@ func (idx *BTCLightClientIndexer) batchSync(lastIndexPoint int64) (
 
 	// if there are new hex address in current block, collect their validator hex address to save in database
 	isNewReporter := false
-	newRepoterInfoList := make([]indexermodel.VigilanteInfo, 0)
+	newReporterMap := make(map[string]indexermodel.VigilanteInfo, 0)
 	for _, bie := range bieSummaryList {
 		if bie.skip {
 			continue
@@ -113,11 +113,12 @@ func (idx *BTCLightClientIndexer) batchSync(lastIndexPoint int64) (
 			_, exist := idx.Vim[e.ReporterAddress]
 			if !exist {
 				idx.Debugf("the reporter %s address isn't in current validator info table, the address will be added into the meta table", e.ReporterAddress)
-				newRepoterInfoList = append(newRepoterInfoList, indexermodel.VigilanteInfo{
+
+				newReporterMap[e.ReporterAddress] = indexermodel.VigilanteInfo{
 					ChainInfoID:     idx.ChainInfoID,
 					OperatorAddress: e.ReporterAddress,
 					Moniker:         "Babylon Vigilante Repoter",
-				})
+				}
 				isNewReporter = true
 			}
 		}
@@ -125,11 +126,16 @@ func (idx *BTCLightClientIndexer) batchSync(lastIndexPoint int64) (
 
 	// this logic will be progressed only when there are new tendermint validators in this block
 	if isNewReporter {
-		idx.Debugf("insert new vigilante reporters: %d", len(newRepoterInfoList))
+		idx.Debugf("insert new vigilante reporters: %d", len(newReporterMap))
+		newRepoterInfoList := make([]indexermodel.VigilanteInfo, 0)
+		for _, v := range newReporterMap {
+			newRepoterInfoList = append(newRepoterInfoList, v)
+		}
 		err := idx.InsertVigilanteInfoList(newRepoterInfoList)
 		if err != nil {
 			// NOTE: fetch again validator_info list, actually already inserted the list by other indexer service
 			idx.FetchValidatorInfoList()
+			idx.Errorf("new reporter list: %v", newRepoterInfoList)
 			return lastIndexPoint, errors.Wrap(err, "failed to insert new reporter list")
 		}
 

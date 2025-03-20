@@ -1,7 +1,6 @@
 package indexer
 
 import (
-	"fmt"
 	"time"
 
 	"sync"
@@ -212,7 +211,7 @@ func (idx *CovenantSignatureIndexer) batchSync(lastIndexPointerHeight, newIndexP
 
 		// exit loop
 		if closedCh1 && closedCh2 {
-			fmt.Println("All channels closed. Exiting loop.")
+			idx.Debugln("All channels closed. Exiting loop.")
 			break
 		}
 	}

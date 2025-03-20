@@ -206,6 +206,7 @@ func (idx *BDAIndexer) batchSync(lastIndexPoint int64) (
 
 	newIndexPointer := summaryList[endHeight].BlockHeight
 	newIndexPointerTime := summaryList[endHeight].Timestamp
+
 	err := idx.InsertBlockDataList(idx.ChainInfoID, newIndexPointer, modelList1, modelList2)
 	if err != nil {
 		return lastIndexPoint, errors.Wrapf(err, "failed to insert from %d to %d height", startHeight, endHeight)

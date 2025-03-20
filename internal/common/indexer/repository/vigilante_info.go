@@ -68,7 +68,7 @@ func (repo *MetaRepository) InsertVigilanteInfoList(VigilanteInfoList []model.Vi
 		ExcludeColumn("id").
 		Exec(ctx)
 	if err != nil {
-		return errors.Wrapf(err, "failed to insert validator info list")
+		return err
 	}
 
 	return nil
