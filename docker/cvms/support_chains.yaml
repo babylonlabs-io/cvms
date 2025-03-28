@@ -765,6 +765,18 @@ lumera-testnet-1:
     - block
     - upgrade
     - uptime
+ledger-testnet-1:
+  chain_name: lombard
+  protocol_type: cosmos
+  mainnet: false
+  support_asset:
+    denom: ulom
+    decimal: 6
+  packages:
+    - block
+    - upgrade
+    - uptime
+    - voteindexer
 mantle-1:
   chain_name: asset-mantle
   protocol_type: cosmos
