@@ -1,5 +1,14 @@
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: 100m
+      max-file: '3'
+      tag: '{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}'
+
 services:
   exporter:
+    <<: *logging
     build: .
     image: cosmostation/cvms:latest
     container_name: cvms-exporter
@@ -25,6 +34,7 @@ services:
       - cvms-net
 
   prometheus:
+    <<: *logging
     image: prom/prometheus:latest
     container_name: cvms-exporter-db
     extra_hosts:
@@ -45,6 +55,7 @@ services:
     restart: unless-stopped
 
   indexer:
+    <<: *logging
     build: .
     image: cosmostation/cvms:latest
     container_name: cvms-indexer
@@ -79,6 +90,7 @@ services:
       - postgres
 
   postgres:
+    <<: *logging
     image: postgres:16.4
     container_name: cvms-indexer-db
     restart: unless-stopped
@@ -116,6 +128,7 @@ services:
       - cvms-net
 
   grafana:
+    <<: *logging
     image: grafana/grafana:latest
     container_name: cvms-grafana
     restart: unless-stopped
@@ -148,6 +161,7 @@ services:
       - cvms-net
 
   alertmanager:
+    <<: *logging
     image: prom/alertmanager:latest
     container_name: cvms-alertmanager
     restart: unless-stopped
@@ -163,6 +177,50 @@ services:
     ports:
       - ${ALERTMANAGER_SERVER_PORT:-9093}:9093
 
+  promtail:
+    container_name: cvms-promtail
+    image: grafana/promtail:latest
+    user: root
+    volumes:
+      - /etc/machine-id:/etc/machine-id:ro
+      - ./docker/promtail:/etc/promtail
+      - promtail-volume:/tmp
+      - ${DOCKER_ROOT:-/var/lib/docker}/containers:/var/lib/docker/containers:ro,rslave
+    command:
+      - '--config.file=/etc/promtail/promtail-config.yaml'
+    restart: 'unless-stopped'
+    networks: ['cvms-net']
+    depends_on: ['loki']
+    <<: *logging
+
+  loki:
+    container_name: cvms-loki
+    image: grafana/loki:latest
+    volumes:
+      - loki-volume:/tmp
+      - ./docker/loki:/etc/loki
+    command:
+      - '--config.file=/etc/loki/loki.yaml'
+    restart: 'unless-stopped'
+    networks: ['cvms-net']
+    <<: *logging
+
+  cadvisor:
+    container_name: cvms-cadvisor
+    restart: 'unless-stopped'
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/rootfs:ro,rslave
+      - /var/run:/var/run
+      - /sys:/sys:ro,rslave
+      - ${DOCKER_ROOT:-/var/lib/docker}:/var/lib/docker:ro,rslave
+    command:
+      - --docker_only
+      - --housekeeping_interval=30s
+    networks: ['cvms-net']
+    <<: *logging
+
 networks:
   cvms-net:
     name: cvms-net
@@ -177,3 +235,5 @@ volumes:
     name: exporter-db-volume
   indexer-db-volume:
     name: indexer-db-volume
+  promtail-volume:
+  loki-volume:

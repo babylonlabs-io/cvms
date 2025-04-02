@@ -164,6 +164,10 @@ func loop(exporter *common.Exporter, p common.Packager) {
 
 		exporter.Debugf("got total %d status", len(status.FinalityProvidersStatus))
 
+		// Reset metrics to avoid stale label combinations (e.g., jailed status change)
+		uptimeMetric.Reset()
+		vpMetric.Reset()
+
 		if p.Mode == common.NETWORK {
 			// update metrics by each validators
 			for _, item := range status.FinalityProvidersStatus {

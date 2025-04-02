@@ -1064,7 +1064,7 @@ pion-1:
   chain_name: neutron
   protocol_type: cosmos
   mainnet: false
-  consumer: true
+  consumer: false
   support_asset:
     denom: untrn
     decimal: 6
@@ -1256,6 +1256,18 @@ stride-1:
     - upgrade
     - uptime
     - voteindexer
+imuachaintestnet_233-8:
+  chain_name: imua
+  protocol_type: cosmos
+  mainnet: false
+  support_asset:
+    denom: hua
+    decimal: 6
+  packages:
+    - block
+    - upgrade
+    # - uptime
+    # - voteindexer  
 selfchain-testnet:
   chain_name: selfchain
   protocol_type: cosmos

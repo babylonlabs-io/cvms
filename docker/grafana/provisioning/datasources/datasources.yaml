@@ -26,3 +26,11 @@ datasources:
       sslmode: 'disable' # disable/require/verify-ca/verify-full
       postgresVersion: 1604 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
       timescaledb: false
+
+  - name: Loki
+    type: loki
+    access: proxy
+    orgId: 1
+    uid: cvms_loki
+    url: http://loki:3100
+    editable: true
