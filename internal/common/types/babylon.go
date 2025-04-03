@@ -53,10 +53,13 @@ type FinalityProviderInfo struct {
 	Description struct {
 		Moniker string `json:"moniker"`
 	} `json:"description"`
-	Address string `json:"addr"`
-	BTCPK   string `json:"btc_pk"`
-	Jailed  bool   `json:"jailed"`
+	Address              string `json:"addr"`
+	BTCPK                string `json:"btc_pk"`
+	Jailed               bool   `json:"jailed"`
+	SlashedBabylonHeight string `json:"slashed_babylon_height"`
+	SlashedBTCHeight     int    `json:"slashed_btc_height"`
 	// injected
+	Slashed     bool
 	Active      bool
 	VotingPower float64
 }

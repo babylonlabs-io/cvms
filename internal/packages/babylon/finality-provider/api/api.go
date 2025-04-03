@@ -34,12 +34,12 @@ func GetFinalityProviderUptime(exporter *common.Exporter) (types.BabylonFinality
 
 	exporter.Debugf("got active finality providers: %d", len(activeProviders))
 
-	fpInfoList, jailedCnt := addActiveStatus(activeProviders, finalityProviderInfos)
+	fpInfoList, jailedCnt, slashedCnt := addActiveStatus(activeProviders, finalityProviderInfos)
 	fpTotal := types.FinalityProviderTotal{
 		Active:   len(activeProviders),
 		Inactive: len(finalityProviderInfos) - len(activeProviders),
 		Jailed:   jailedCnt,
-		Unjailed: len(finalityProviderInfos) - jailedCnt,
+		Slashed:  slashedCnt,
 	}
 
 	// 5. get lity providers' uptime status
@@ -84,17 +84,22 @@ func GetFinalityProviderUptime(exporter *common.Exporter) (types.BabylonFinality
 	}, nil
 }
 
-func addActiveStatus(activeProviders []commontypes.FinalityProvider, finalityProviderInfos []commontypes.FinalityProviderInfo) ([]commontypes.FinalityProviderInfo, int) {
+func addActiveStatus(activeProviders []commontypes.FinalityProvider, finalityProviderInfos []commontypes.FinalityProviderInfo) ([]commontypes.FinalityProviderInfo, int, int) {
 	activeFpMap := make(map[string]commontypes.FinalityProvider, len(activeProviders))
 	for _, fp := range activeProviders {
 		activeFpMap[fp.BtcPkHex] = fp
 	}
 
 	jailedCnt := 0
+	slashedCnt := 0
 	// Modify the original slice using index-based iteration
 	for i := range finalityProviderInfos {
 		if finalityProviderInfos[i].Jailed {
 			jailedCnt++
+		}
+
+		if finalityProviderInfos[i].SlashedBTCHeight > 0 {
+			slashedCnt++
 		}
 
 		fp, exist := activeFpMap[finalityProviderInfos[i].BTCPK]
@@ -106,7 +111,7 @@ func addActiveStatus(activeProviders []commontypes.FinalityProvider, finalityPro
 		}
 	}
 
-	return finalityProviderInfos, jailedCnt
+	return finalityProviderInfos, jailedCnt, slashedCnt
 }
 
 func getLastFinalizedBlockInfo(votes []string, fps []commontypes.FinalityProvider) types.LastFinalizedBlockInfo {

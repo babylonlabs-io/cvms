@@ -14,7 +14,7 @@ type FinalityProviderUptimeStatus struct {
 	BTCPK              string
 	MissedBlockCounter float64
 	Active             string
-	Jailed             string
+	Status             string
 	VotingPower        float64
 }
 
@@ -28,5 +28,5 @@ type FinalityProviderTotal struct {
 	Active   int
 	Inactive int
 	Jailed   int
-	Unjailed int
+	Slashed  int
 }

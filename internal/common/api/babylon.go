@@ -114,11 +114,20 @@ func GetFinalityProviderUptime(c common.CommonClient, fpInfoList []types.Finalit
 		jailed := item.Jailed
 		active := item.Active
 		vp := item.VotingPower
-
+		slashedBTCHeight := item.SlashedBTCHeight
+		status := "active"
 		queryPath := types.BabylonFinalityProviderSigninInfoQueryPath(item.BTCPK)
 		go func(ch chan helper.Result) {
 			defer helper.HandleOutOfNilResponse(c.Entry)
 			defer wg.Done()
+
+			if jailed {
+				status = "jailed"
+			}
+
+			if slashedBTCHeight > 0 {
+				status = "slashed"
+			}
 
 			if !active {
 				ch <- helper.Result{
@@ -128,7 +137,7 @@ func GetFinalityProviderUptime(c common.CommonClient, fpInfoList []types.Finalit
 						Address:            Address,
 						BTCPK:              BTCPK,
 						MissedBlockCounter: 0,
-						Jailed:             strconv.FormatBool(jailed),
+						Status:             status,
 						Active:             strconv.FormatBool(active),
 						VotingPower:        0,
 					}}
@@ -167,7 +176,7 @@ func GetFinalityProviderUptime(c common.CommonClient, fpInfoList []types.Finalit
 					Address:            Address,
 					BTCPK:              BTCPK,
 					MissedBlockCounter: missedBlockCounter,
-					Jailed:             strconv.FormatBool(jailed),
+					Status:             status,
 					Active:             strconv.FormatBool(active),
 					VotingPower:        vp,
 				}}

@@ -30,7 +30,7 @@ const (
 	LastFinalizedBlockMissingVPMetricName         = "last_finalized_block_missing_vp"
 	LastFinalizedBlockFinalizedVPMetricName       = "last_finalized_block_finalized_vp"
 
-	METRIC_NAME_FINALITY_PROVIDERS_TOTAL = "finality_providers_total"
+	METRIC_NAME_FINALITY_PROVIDERS_TOTAL = "total"
 )
 
 func Start(p common.Packager) error {
@@ -65,7 +65,7 @@ func loop(exporter *common.Exporter, p common.Packager) {
 		common.MonikerLabel,
 		common.OrchestratorAddressLabel,
 		common.BTCPKLabel,
-		common.JailedLabel,
+		common.StatusLabel,
 		common.ActiveLabel,
 	})
 
@@ -78,7 +78,7 @@ func loop(exporter *common.Exporter, p common.Packager) {
 		common.MonikerLabel,
 		common.OrchestratorAddressLabel,
 		common.BTCPKLabel,
-		common.JailedLabel,
+		common.StatusLabel,
 		common.ActiveLabel,
 	})
 
@@ -176,7 +176,7 @@ func loop(exporter *common.Exporter, p common.Packager) {
 						common.MonikerLabel:             item.Moniker,
 						common.BTCPKLabel:               item.BTCPK,
 						common.OrchestratorAddressLabel: item.Address,
-						common.JailedLabel:              item.Jailed,
+						common.StatusLabel:              item.Status,
 						common.ActiveLabel:              item.Active,
 					}).
 					Set(float64(item.MissedBlockCounter))
@@ -187,7 +187,7 @@ func loop(exporter *common.Exporter, p common.Packager) {
 							common.MonikerLabel:             item.Moniker,
 							common.BTCPKLabel:               item.BTCPK,
 							common.OrchestratorAddressLabel: item.Address,
-							common.JailedLabel:              item.Jailed,
+							common.StatusLabel:              item.Status,
 							common.ActiveLabel:              item.Active,
 						}).
 						Set(item.VotingPower)
@@ -197,7 +197,7 @@ func loop(exporter *common.Exporter, p common.Packager) {
 			fpTotalMetric.With(prometheus.Labels{common.StatusLabel: "active"}).Set(float64(status.FinalityProviderTotal.Active))
 			fpTotalMetric.With(prometheus.Labels{common.StatusLabel: "inactive"}).Set(float64(status.FinalityProviderTotal.Inactive))
 			fpTotalMetric.With(prometheus.Labels{common.StatusLabel: "jailed"}).Set(float64(status.FinalityProviderTotal.Jailed))
-			fpTotalMetric.With(prometheus.Labels{common.StatusLabel: "unjailed"}).Set(float64(status.FinalityProviderTotal.Unjailed))
+			fpTotalMetric.With(prometheus.Labels{common.StatusLabel: "slashed"}).Set(float64(status.FinalityProviderTotal.Slashed))
 		} else {
 			for _, item := range status.FinalityProvidersStatus {
 				if ok := helper.Contains(exporter.Monikers, item.Moniker); ok {
@@ -206,7 +206,7 @@ func loop(exporter *common.Exporter, p common.Packager) {
 							common.MonikerLabel:             item.Moniker,
 							common.BTCPKLabel:               item.BTCPK,
 							common.OrchestratorAddressLabel: item.Address,
-							common.JailedLabel:              item.Jailed,
+							common.StatusLabel:              item.Status,
 							common.ActiveLabel:              item.Active,
 						}).
 						Set(float64(item.MissedBlockCounter))
@@ -217,7 +217,7 @@ func loop(exporter *common.Exporter, p common.Packager) {
 								common.MonikerLabel:             item.Moniker,
 								common.BTCPKLabel:               item.BTCPK,
 								common.OrchestratorAddressLabel: item.Address,
-								common.JailedLabel:              item.Jailed,
+								common.StatusLabel:              item.Status,
 								common.ActiveLabel:              item.Active,
 							}).
 							Set(item.VotingPower)
