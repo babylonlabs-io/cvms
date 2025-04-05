@@ -84,6 +84,7 @@ func (repo *MetaRepository) UpsertCovenantCommitteeInfoList(ccInfoList []model.C
 
 	_, err := repo.NewInsert().
 		Model(&ccInfoList).
+		ExcludeColumn("id").
 		On("CONFLICT (chain_info_id, covenant_btc_pk) DO UPDATE").
 		Set("moniker = EXCLUDED.moniker").
 		Exec(ctx)

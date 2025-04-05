@@ -90,7 +90,10 @@ func (idx *CovenantSignatureIndexer) Start() error {
 		})
 	}
 
-	idx.csRepo.UpsertCovenantCommitteeInfoList(newCovenantCommitteeInfoList)
+	err = idx.csRepo.UpsertCovenantCommitteeInfoList(newCovenantCommitteeInfoList)
+	if err != nil {
+		return errors.Wrap(err, "failed to upsert covenant committee list")
+	}
 	err = idx.FetchValidatorInfoList()
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch covenant committee list")
