@@ -68,7 +68,7 @@ func (idx *CheckpointIndexer) batchSync(lastIndexPointerEpoch int64) (
 
 	idx.Infof("last finalized epoch(current_epoch -1) is %d and last index pointer epoch is %d", lastFinalizedEpoch, newIndexerPointerEpoch)
 	for epoch := int64(0); epoch <= lastFinalizedEpoch; epoch++ {
-		if epoch <= 1 {
+		if epoch < 1 {
 			continue
 		}
 
@@ -78,7 +78,7 @@ func (idx *CheckpointIndexer) batchSync(lastIndexPointerEpoch int64) (
 		}
 
 		idx.Debugf("sync epoch: %d", epoch)
-		resp, err := requester.Get(EpochQueryPath(epoch))
+		resp, err := requester.Get(EpochQueryPath(epoch + 1)) // NOTE: for finding the first block for this epoch, we should use epoch + 1
 		if err != nil {
 			return lastIndexPointerEpoch, errors.Wrap(err, "failed to get epoch data")
 		}
@@ -87,6 +87,8 @@ func (idx *CheckpointIndexer) batchSync(lastIndexPointerEpoch int64) (
 		if err != nil {
 			return lastIndexPointerEpoch, errors.Wrap(err, "failed to get epoch data")
 		}
+
+		idx.Debugf("found %d first block height in %d epoch", firstBlockHeightInEpoch, epoch)
 
 		prevBlockHeight, preBlockTimestamp, preBlockProposerAddress, _, _, _, err := api.GetBlock(idx.CommonClient, firstBlockHeightInEpoch-1)
 		if err != nil {

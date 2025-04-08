@@ -13,8 +13,8 @@ type FinalityProviderUptimeStatus struct {
 	Address            string
 	BTCPK              string
 	MissedBlockCounter float64
-	Active             string
-	Status             string
+	Active             float64
+	Status             float64
 	VotingPower        float64
 }
 

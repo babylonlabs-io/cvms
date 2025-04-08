@@ -141,6 +141,7 @@ func (idx *BTCLightClientIndexer) Loop(indexPoint int64) {
 		} else {
 			// when node already catched up, sleep 5 sec
 			idx.Infof("updated index pointer to %d and sleep %s sec...", indexPoint, indexertypes.DefaultSleepDuration.String())
+			time.Sleep(indexertypes.DefaultSleepDuration)
 		}
 	}
 }

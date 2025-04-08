@@ -22,6 +22,9 @@ const (
 	UnHealthSleep  = 10 * time.Second
 
 	MissedVotesCounterMetricName = "missed_votes_counter"
+	ActiveMetricName             = "active"
+	StatusMetricName             = "status"
+
 	VotingPowerMetricName        = "voting_power"
 	SignedVotesWindowMetricName  = "signed_votes_window"
 	MinSignedPerWindowMetricName = "min_signed_per_window"
@@ -66,8 +69,30 @@ func loop(exporter *common.Exporter, p common.Packager) {
 		common.MonikerLabel,
 		common.OrchestratorAddressLabel,
 		common.BTCPKLabel,
-		common.StatusLabel,
-		common.ActiveLabel,
+	})
+
+	activeMetric := p.Factory.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace:   common.Namespace,
+		Subsystem:   Subsystem,
+		Name:        ActiveMetricName,
+		ConstLabels: packageLabels,
+		Help:        "active status of finality provider, 1 means active, 0 means inactive",
+	}, []string{
+		common.MonikerLabel,
+		common.OrchestratorAddressLabel,
+		common.BTCPKLabel,
+	})
+
+	statusMetric := p.Factory.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace:   common.Namespace,
+		Subsystem:   Subsystem,
+		Name:        StatusMetricName,
+		ConstLabels: packageLabels,
+		Help:        "specific status of finality provider, 1 means active, 0 means jailed, -1 means slashed",
+	}, []string{
+		common.MonikerLabel,
+		common.OrchestratorAddressLabel,
+		common.BTCPKLabel,
 	})
 
 	vpMetric := p.Factory.NewGaugeVec(prometheus.GaugeOpts{
@@ -79,8 +104,6 @@ func loop(exporter *common.Exporter, p common.Packager) {
 		common.MonikerLabel,
 		common.OrchestratorAddressLabel,
 		common.BTCPKLabel,
-		common.StatusLabel,
-		common.ActiveLabel,
 	})
 
 	// metrics for each chain
@@ -183,22 +206,32 @@ func loop(exporter *common.Exporter, p common.Packager) {
 						common.MonikerLabel:             item.Moniker,
 						common.BTCPKLabel:               item.BTCPK,
 						common.OrchestratorAddressLabel: item.Address,
-						common.StatusLabel:              item.Status,
-						common.ActiveLabel:              item.Active,
 					}).
 					Set(float64(item.MissedBlockCounter))
 
-				if item.VotingPower != 0 {
-					vpMetric.
-						With(prometheus.Labels{
-							common.MonikerLabel:             item.Moniker,
-							common.BTCPKLabel:               item.BTCPK,
-							common.OrchestratorAddressLabel: item.Address,
-							common.StatusLabel:              item.Status,
-							common.ActiveLabel:              item.Active,
-						}).
-						Set(item.VotingPower)
-				}
+				vpMetric.
+					With(prometheus.Labels{
+						common.MonikerLabel:             item.Moniker,
+						common.BTCPKLabel:               item.BTCPK,
+						common.OrchestratorAddressLabel: item.Address,
+					}).
+					Set(item.VotingPower)
+
+				activeMetric.
+					With(prometheus.Labels{
+						common.MonikerLabel:             item.Moniker,
+						common.BTCPKLabel:               item.BTCPK,
+						common.OrchestratorAddressLabel: item.Address,
+					}).
+					Set(item.Active)
+
+				statusMetric.
+					With(prometheus.Labels{
+						common.MonikerLabel:             item.Moniker,
+						common.BTCPKLabel:               item.BTCPK,
+						common.OrchestratorAddressLabel: item.Address,
+					}).
+					Set(item.Status)
 			}
 
 			fpTotalMetric.With(prometheus.Labels{common.StatusLabel: "active"}).Set(float64(status.FinalityProviderTotal.Active))
@@ -213,22 +246,32 @@ func loop(exporter *common.Exporter, p common.Packager) {
 							common.MonikerLabel:             item.Moniker,
 							common.BTCPKLabel:               item.BTCPK,
 							common.OrchestratorAddressLabel: item.Address,
-							common.StatusLabel:              item.Status,
-							common.ActiveLabel:              item.Active,
 						}).
 						Set(float64(item.MissedBlockCounter))
 
-					if item.VotingPower != 0 {
-						vpMetric.
-							With(prometheus.Labels{
-								common.MonikerLabel:             item.Moniker,
-								common.BTCPKLabel:               item.BTCPK,
-								common.OrchestratorAddressLabel: item.Address,
-								common.StatusLabel:              item.Status,
-								common.ActiveLabel:              item.Active,
-							}).
-							Set(item.VotingPower)
-					}
+					vpMetric.
+						With(prometheus.Labels{
+							common.MonikerLabel:             item.Moniker,
+							common.BTCPKLabel:               item.BTCPK,
+							common.OrchestratorAddressLabel: item.Address,
+						}).
+						Set(item.VotingPower)
+
+					activeMetric.
+						With(prometheus.Labels{
+							common.MonikerLabel:             item.Moniker,
+							common.BTCPKLabel:               item.BTCPK,
+							common.OrchestratorAddressLabel: item.Address,
+						}).
+						Set(item.Active)
+
+					statusMetric.
+						With(prometheus.Labels{
+							common.MonikerLabel:             item.Moniker,
+							common.BTCPKLabel:               item.BTCPK,
+							common.OrchestratorAddressLabel: item.Address,
+						}).
+						Set(item.Status)
 				}
 			}
 		}
