@@ -182,7 +182,8 @@ chains:
 ```
 
 ## Example Using Environment Variables
-Environment variables can be used to inject values into the configuration file. 
+
+Environment variables can be used to inject values into the configuration file.
 For this a simple template variable marked by `${}` (e.g. `${SUPER_SECRET_ENV_VAR}`) can be added to the config file.
 
 ```yaml
@@ -232,4 +233,104 @@ mintstation-1:
     - uptime
     - voteindexer #for cometbft consensus vote
     - veindexer # for vote-extension
+```
+
+## Example: Setup for Persistent Mode
+
+> **Note:** Persistent mode means CVMS uses an external PostgreSQL service to store index data permanently.  
+> If you want to retain historical records, please follow the steps in this guide.
+
+You can copy and customize the `.env` file to configure service ports, log levels, `prometheus.yaml`, or other settings as needed.
+
+---
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/cosmostation/cvms.git && cd cvms
+
+# Create a configuration file based on the example
+cp .resource/example-validator-config.yaml config.yaml
+
+# Copy the .env file for external DB settings
+cp .resource/.env.example .env
+
+# Modify environment variables for persistent mode
+# (See example .env configuration below)
+
+# Edit the config file to match your validator setup
+vi config.yaml
+
+# Override the default Docker Compose file to disable the internal Postgres service
+cp .resource/docker-compose.override.yaml.persistent_mode docker-compose.override.yaml
+
+# Start CVMS
+docker compose up --build -d
+```
+
+**Example .env**
+
+```ini
+###### CVMS Services #######
+#EXPORTER_PORT=9200
+#INDEXER_PORT=9300
+#LOG_COLOR_DISABLE=false
+#LOG_LEVEL=4
+#CONFIG_PATH=./config.yaml
+#CUSTOM_CHAINS_FILE=custom_chains.yaml
+# If you don't want to delete old records, use "persistence" instead of specific period
+DB_RETENTION_PERIOD=persistence
+# If you're operating docker service in not default directory, please enable this env for cadvisor and promtail
+# DOCKER_ROOT=/data/docker
+
+####### Prometheus Service #######
+# PROM_SERVER_PORT=9090
+# PROM_CONFIG_FILE=custom-prometheus.yml
+# PROM_RETENTION_TIME=1m
+
+####### Postgres Service #######
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=cvms
+DB_USER=cvms
+DB_PASSWORD=mysecretpassword
+
+
+####### Grafana Service #######
+#ADMIN_USER=admin
+#ADMIN_PASSWORD=admin
+#GRAFANA_HOME_DASHBOARD=/etc/grafana/provisioning/dashboards/network/network-status-dashboard.json
+#GRAFANA_SERVER_PORT=3000
+
+####### Alertmanager Service #######
+#ALERTMANAGER_SERVER_PORT=9093
+```
+
+**Example config.yaml**
+
+```yaml
+# NOTE: Customize this variables by your needs
+# 1. network mode:
+#   ex) monikers: ['all']
+#   des) This will enable network mode to monitor all validators status in the blockchain network
+#
+# 2. validator mode:
+#   ex) monikers: ['Cosmostation1', 'Cosmostation2']
+#   des) This will enable validator mode for whitelisted specific validators
+monikers: ['all']
+
+# if user is one of validators, they want to operator for whole chains which already operating as validator.
+chains:
+  - display_name: 'cosmos'
+    # NOTE: chain_id is a key for support_chains list. YOU SHOULD match correct CHAIN ID
+    chain_id: cosmoshub-4
+    # NOTE: these addresses will be used for balance usage tracking such as validator, broadcaster or something.
+    tracking_addresses:
+      - 'cosmos1clpqr4nrk4khgkxj78fcwwh6dl3uw4ep4tgu9q'
+    nodes:
+      # NOTE: currently grpc endpoint doesn't support ssl
+      - rpc: 'https://rpc-cosmos.endpoint.xyz'
+        api: 'https://lcd-cosmos.endpoint.xyz'
+        grpc: 'grpc-cosmos.endpoint.xyz:9090'
 ```

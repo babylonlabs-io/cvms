@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 7,
+  "id": 10,
   "links": [],
   "panels": [
     {
@@ -43,10 +43,74 @@
         "content": "<!-- Main content -->\n<div style=\"display: flex; justify-content: space-between; align-items: center;\">\n  <!-- H2 with a link -->\n   <a href=\"https://github.com/cosmostation/cvms\" target=\"_blank\" style=\"text-decoration: none; color: inherit;\">\n    <h2 style=\"margin-right: 10px;\">Cosmos Validator Monitoring Service (CVMS) 🌌 🔭</h2>\n  </a> \n  <!-- \"Powered by Cosmostation\" on the right -->\n  <div style=\"display: flex; align-items: center;\">\n    <a href=\"https://cosmostation.io\" target=\"_blank\" style=\"text-decoration: none; color: inherit;\">\n        <span>Powered by Cosmostation </span>\n        <img src=\"https://raw.githubusercontent.com/cosmostation/chainlist/refs/heads/main/resource/cosmostation/cosmostation_color.svg\" alt=\"Logo\" style=\"height: 30px; margin-left: 5px;\">\n    </a>\n  </div>\n</div>\n\n<!-- Paragraph below the header -->\n<p>\n  The Cosmos Validator Monitoring Service (CVMS) is an open-source, integrated monitoring system designed for validators and network in the Cosmos app chain ecosystem.<br/>\n  This public dashboard is a playground for developers and beta release testing for CVMS.\n</p>\n<p>\n  <a href=\"https://github.com/cosmostation/cvms\" target=\"_blank\" style=\"text-decoration: none; color: #1E90FF;\">\n    👉 CVMS Github Link Here!\n  </a> \n  <a href=\"https://github.com/cosmostation/cvms/blob/release/docs/setup.md\" target=\"_blank\" style=\"text-decoration: none; color: #1E90FF;\">\n    👉 CVMS Setup Guide Here!!\n  </a> \n</p>",
         "mode": "html"
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "11.5.1",
       "title": "",
-      "transparent": true,
       "type": "text"
+    },
+    {
+      "datasource": {
+        "uid": "cvms_exporter_db"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "orange",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "id": 24,
+      "options": {
+        "displayMode": "lcd",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "11.5.1",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "time() - cvms_root_index_pointer_timestamp{chain_id='$chain_id'}",
+          "legendFormat": "{{package}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Indexer Sync Delay",
+      "type": "bargauge"
     },
     {
       "collapsed": false,
@@ -54,7 +118,239 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 4
+        "y": 9
+      },
+      "id": 20,
+      "panels": [],
+      "title": "Block Data Analytics",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cvms_exporter_db"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 0,
+        "y": 10
+      },
+      "id": 22,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.5.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cvms_exporter_db"
+          },
+          "editorMode": "code",
+          "expr": "(cvms_block_data_analytics_block_gas_used{chain_id='$chain_id'} / scalar(cvms_block_data_analytics_block_max_gas)) * 100",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Block Gas Usage %",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cvms_exporter_db"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 4,
+        "y": 10
+      },
+      "id": 21,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.5.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cvms_exporter_db"
+          },
+          "editorMode": "code",
+          "expr": "(cvms_block_data_analytics_block_txs_bytes{chain_id='$chain_id'} / scalar(cvms_block_data_analytics_block_max_bytes)) * 100 ",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Tx Bytes Usage %",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "cvms_indexer_db"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 16,
+        "x": 8,
+        "y": 10
+      },
+      "id": 19,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "11.5.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "cvms_indexer_db"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n\tbda.height, \n\tbda.total_gas_used,\n\tbda.total_gas_wanted,\n\tbda.total_txs_bytes,\n\tbda.success_txs_count,\n\tbda.failed_txs_count\nfrom block_data_analytics_${table_chain_id} bda \nORDER BY height desc\nlimit 10;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Latest Blocks Info",
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
       },
       "id": 18,
       "panels": [],
@@ -75,7 +371,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 5
+        "y": 18
       },
       "id": 11,
       "options": {
@@ -122,7 +418,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": ";  -- Order in ascending order for the last 100 blocks\nWITH max_height AS (\n  SELECT MAX(height) AS highest_height\n  FROM babylon_btc_lightclient_${chain_id}\n)\nSELECT\n  bbl.height, -- height, header_count, btc_headers.\n  bbl.is_roll_back::INTEGER,\n  vi.operator_address as address,\n  bbl.roll_forward_count,\n  bbl.roll_back_count,\n  bbl.btc_height\nFROM\n  babylon_btc_lightclient_${chain_id} bbl\nJOIN\n  meta.validator_info vi\n  ON bbl.reporter_id = vi.id\nJOIN\n  max_height mh  -- Join to get the maximum block height\n  ON bbl.height BETWEEN (mh.highest_height - 1000) AND mh.highest_height\nORDER BY height asc",
+          "rawSql": ";  -- Order in ascending order for the last 100 blocks\nWITH max_height AS (\n  SELECT MAX(height) AS highest_height\n  FROM babylon_btc_lightclient_${table_chain_id}\n)\nSELECT\n  bbl.height, -- height, header_count, btc_headers.\n  bbl.is_roll_back::INTEGER,\n  vi.operator_address as address,\n  bbl.roll_forward_count,\n  bbl.roll_back_count,\n  bbl.btc_height\nFROM\n  babylon_btc_lightclient_${table_chain_id} bbl\nJOIN\n  meta.vigilante_info vi\n  ON bbl.reporter_id = vi.id\nJOIN\n  max_height mh  -- Join to get the maximum block height\n  ON bbl.height BETWEEN (mh.highest_height - ${lightclient_blocks}) AND mh.highest_height\nORDER BY height asc",
           "refId": "A",
           "sql": {
             "columns": [
@@ -161,7 +457,7 @@
         "h": 11,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 24
       },
       "id": 17,
       "options": {
@@ -208,7 +504,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH latest_delegations AS (\n    SELECT * \n    FROM public.babylon_btc_delegation \n    ORDER BY height DESC\n    LIMIT 100\n)\nSELECT \n    ld.chain_info_id,\n    ld.height AS delegation_height,\n    ld.btc_staking_tx_hash,\n    cci.moniker,\n    COALESCE(bcs.height, -1) AS signature_height,  \n    COALESCE(bcs.covenant_btc_pk_id, cci.id) AS covenant_btc_pk_id,\n    COALESCE(cci.covenant_btc_pk, 'N/A') AS covenant_btc_pk,\n    CASE \n        WHEN bcs.btc_staking_tx_hash IS NOT NULL AND cci.id IS NOT NULL THEN TRUE\n        ELSE FALSE\n    END AS status\nFROM latest_delegations ld\nCROSS JOIN meta.covenant_committee_info cci \nLEFT JOIN public.babylon_covenant_signature bcs \n    ON ld.btc_staking_tx_hash = bcs.btc_staking_tx_hash\n    and cci.moniker = cci.moniker\n    AND ld.chain_info_id = bcs.chain_info_id\n    AND cci.id = bcs.covenant_btc_pk_id\nWHERE ld.chain_info_id = cci.chain_info_id\nORDER BY ld.height DESC, cci.id;",
+          "rawSql": "WITH latest_delegations AS (\n    SELECT * \n    FROM public.babylon_btc_delegation_${table_chain_id}\n    ORDER BY height DESC\n    LIMIT 100\n)\nSELECT \n    ld.chain_info_id,\n    ld.height AS delegation_height,\n    ld.btc_staking_tx_hash,\n    cci.moniker,\n    COALESCE(bcs.height, -1) AS signature_height,  \n    COALESCE(bcs.covenant_btc_pk_id, cci.id) AS covenant_btc_pk_id,\n    COALESCE(cci.covenant_btc_pk, 'N/A') AS covenant_btc_pk,\n    CASE \n        WHEN bcs.btc_staking_tx_hash IS NOT NULL AND cci.id IS NOT NULL THEN TRUE\n        ELSE FALSE\n    END AS status\nFROM latest_delegations ld\nCROSS JOIN meta.covenant_committee_info cci \nLEFT JOIN public.babylon_covenant_signature_${table_chain_id} bcs \n    ON ld.btc_staking_tx_hash = bcs.btc_staking_tx_hash\n    and cci.moniker = cci.moniker\n    AND ld.chain_info_id = bcs.chain_info_id\n    AND cci.id = bcs.covenant_btc_pk_id\nWHERE ld.chain_info_id = cci.chain_info_id\nORDER BY ld.height DESC, cci.id;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -239,7 +535,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 35
       },
       "id": 7,
       "panels": [],
@@ -260,7 +556,7 @@
         "h": 34,
         "w": 12,
         "x": 0,
-        "y": 23
+        "y": 36
       },
       "id": 1,
       "options": {
@@ -307,7 +603,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": ";  -- Order in ascending order for the last 100 blocks\nWITH max_height AS (\n  SELECT MAX(height) AS highest_height\n  FROM babylon_finality_provider_${chain_id}\n)\nSELECT\n  bfp.height,\n  bfp.status,\n  fpi.moniker AS moniker,\n  fpi.operator_address as address,\n  fpi.btc_pk as btc_pk\nFROM\n  babylon_finality_provider_${chain_id} bfp\nJOIN\n  meta.finality_provider_info fpi\n  ON bfp.finality_provider_pk_id = fpi.id\nJOIN\n  max_height mh  -- Join to get the maximum block height\n  ON bfp.height BETWEEN (mh.highest_height - 50) AND mh.highest_height\nORDER by\n  bfp.height ASC\n  \n  ",
+          "rawSql": ";  -- Order in ascending order for the last 100 blocks\nWITH max_height AS (\n  SELECT MAX(height) AS highest_height\n  FROM babylon_finality_provider_${table_chain_id}\n)\nSELECT\n  bfp.height,\n  bfp.status,\n  fpi.moniker AS moniker,\n  fpi.operator_address as address,\n  fpi.btc_pk as btc_pk\nFROM\n  babylon_finality_provider_${table_chain_id} bfp\nJOIN\n  meta.finality_provider_info fpi\n  ON bfp.finality_provider_pk_id = fpi.id\nJOIN\n  max_height mh  -- Join to get the maximum block height\n  ON bfp.height BETWEEN (mh.highest_height - ${blocks}) AND mh.highest_height\nORDER by\n  bfp.height ASC\n  \n  ",
           "refId": "A",
           "sql": {
             "columns": [
@@ -329,7 +625,6 @@
         }
       ],
       "title": "Finality Provider Vote Status",
-      "transparent": true,
       "type": "nline-plotlyjs-panel"
     },
     {
@@ -418,7 +713,7 @@
         "h": 34,
         "w": 12,
         "x": 12,
-        "y": 23
+        "y": 36
       },
       "id": 10,
       "options": {
@@ -434,7 +729,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "11.5.1",
       "targets": [
         {
           "datasource": {
@@ -442,7 +737,7 @@
             "uid": "cvms_exporter_db"
           },
           "editorMode": "code",
-          "expr": "round(1 - cvms_babylon_finality_provider_missed_votes_counter / on (chain_id) group_left cvms_babylon_finality_provider_signed_votes_window, 0.001) * 100",
+          "expr": "round(1 - cvms_babylon_finality_provider_missed_votes_counter{chain_id='$chain_id'} / on (chain_id) group_left cvms_babylon_finality_provider_signed_votes_window, 0.001) * 100",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -450,7 +745,6 @@
         }
       ],
       "title": "Finality Provider Uptime Trend",
-      "transparent": true,
       "type": "timeseries"
     },
     {
@@ -459,7 +753,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 57
+        "y": 70
       },
       "id": 5,
       "panels": [],
@@ -480,7 +774,7 @@
         "h": 40,
         "w": 12,
         "x": 0,
-        "y": 58
+        "y": 71
       },
       "id": 8,
       "options": {
@@ -527,7 +821,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": ";  -- Order in ascending order for the last 100 blocks\nWITH max_height AS (\n  SELECT MAX(height) AS highest_height\n  FROM voteindexer_${chain_id}\n)\nSELECT\n  vidx.height,\n  vidx.status,\n  vi.moniker AS moniker\nFROM\n  voteindexer_${chain_id} vidx\nJOIN\n  meta.validator_info vi\n  ON vidx.validator_hex_address_id = vi.id\nJOIN\n  max_height mh  -- Join to get the maximum block height\n  ON vidx.height BETWEEN (mh.highest_height - 50) AND mh.highest_height\nORDER by\n  vidx.height ASC\n  \n  ",
+          "rawSql": ";\nWITH max_height AS (\n  SELECT MAX(height) AS highest_height\n  FROM voteindexer_${table_chain_id}\n)\nSELECT\n  vidx.height,\n  vidx.status,\n  vi.moniker AS moniker\nFROM\n  voteindexer_${table_chain_id} vidx\nJOIN\n  meta.validator_info vi\n  ON vidx.validator_hex_address_id = vi.id\nJOIN\n  max_height mh  -- Join to get the maximum block height\n  ON vidx.height BETWEEN (mh.highest_height - ${blocks}) AND mh.highest_height\nORDER by\n  vidx.height ASC\n  \n  ",
           "refId": "A",
           "sql": {
             "columns": [
@@ -549,7 +843,6 @@
         }
       ],
       "title": "Consensus Vote Status",
-      "transparent": true,
       "type": "nline-plotlyjs-panel"
     },
     {
@@ -567,7 +860,7 @@
         "h": 40,
         "w": 12,
         "x": 12,
-        "y": 58
+        "y": 71
       },
       "id": 4,
       "options": {
@@ -600,7 +893,7 @@
         },
         "onclick": "",
         "resScale": 2,
-        "script": "// Extracting the SQL data\nlet series = data.series[0];  // Access the data series\nif (!series || series.length === 0 || series.fields[0].values.length === 0) {\n  // Query result has no records, so skip the chart rendering\n  return {\n      data: [],\n    layout: {\n      title: 'No Data Available',\n      height: 10, // Reduce panel height\n      margin: {\n        l: 20,  // Left margin\n        r: 20,  // Right margin\n        t: 40,  // Top margin\n        b: 40   // Bottom margin\n      }\n    }\n  };\n}\n\n// Start data processing\nlet height = series.fields[0];  // Block height\nlet voted = series.fields[1];   // Voted status (0 = Inactive, 1 = Missed, 2 = Voted, 3 = Proposed)\nlet moniker = series.fields[2]; // Moniker (Validator name)\nlet epoch = series.fields[3]; // Moniker (Validator name)\n\n// Get unique monikers and heights from the dataset for rows and columns\nlet uniqueMonikers = [...new Set(moniker.values)].sort().reverse();  // Unique monikers for Y-axis\nlet uniqueHeights = [...new Set(height.values)].sort().reverse();    // Unique block heights for X-axis\n\n// Initialize the 2D array (zValues) for the heatmap, default to 0 (Inactive)\nlet zValues = Array(uniqueMonikers.length).fill(null).map(() => Array(uniqueHeights.length).fill(0));\nlet hoverText = Array(uniqueMonikers.length).fill(null).map(() => Array(uniqueHeights.length).fill(\"\"));\n\n// Populate zValues with voted data (0 = Inactive, 1 = Missed, 2 = Voted, 3 = Proposed)\nfor (let i = 0; i < height.values.length; i++) {\n  let rowIndex = uniqueMonikers.indexOf(moniker.values[i]);  // Find the correct row for the moniker\n  let colIndex = uniqueHeights.indexOf(height.values[i]);    // Find the correct column for the height\n  zValues[rowIndex][colIndex] = voted.values[i];  // Assign the voted status\n  let statusMeaning = getStatusMeaning(voted.values[i]);  // Get the status meaning\n  let epoch_number = epoch.values[i];\n  hoverText[rowIndex][colIndex] = `x: ${height.values[i]}<br>y: ${moniker.values[i]}<br>z: ${statusMeaning}(epoch: ${epoch_number})`;  // Custom hover info with status meaning    \n}\n\n// Define a continuous color scale for smoother transitions\n// let colorScale = [\n//   [0, 'rgba(255, 0, 0, 0.5)'],    // Inactive = gray\n//   [0.33, 'rgba(0, 0, 0, 0.5)'],     // Missed = red\n//   [0.66, 'rgba(0, 0, 0, 0.5)'],       // Voted = black\n//   [1, 'rgba(0, 0, 0, 0.5)'],        // Nill = yellow\n// ];\n\n// Define a continuous color scale for smoother transitions\nlet colorScale = [\n  [0, 'rgba(128, 128, 128, 0.5)'],    // Inactive = gray\n  [0.33, 'rgba(255, 0, 0, 0.5)'],     // Missed = red\n  [0.66, 'rgba(0, 0, 0, 0.5)'],       // Voted = black\n  [1, 'rgba(255, 255, 0, 0.5)'],        // Nill = yellow\n];\n\n\n// Return the heatmap configuration for Plotly\nreturn {\n  data: [{\n    z: zValues,               // 2D array of statuses (0, 1, 2, 3)\n    x: uniqueHeights,         // Block heights for X-axis\n    y: uniqueMonikers,        // Monikers for Y-axis\n    type: 'heatmap',          // Plotly heatmap type\n    colorscale: colorScale,   // Use only two colors for discrete values\n    showscale: false,         // Hide the color scale bar\n    zmin: 0,                  // Set the minimum value for z (status)\n    zmax: 3,                  // Set the maximum value for z (status)\n    xgap: 5,                  // Add gap between cells along the X-axis (adjust the value for bigger gaps)\n    ygap: 5,                   // Add gap between cells along the Y-axis (adjust the value for bigger gaps)    \n    text: hoverText,          // Set the hoverText for the heatmap\n    hoverinfo: 'text'         // Display the hoverText    \n  }],\n  layout: {\n    xaxis: {\n      type: 'category',\n      tickmode: 'linear',\n      showgrid: true,          // Ensure gridlines on X-axis\n      tickformat: '.0f',\n      tickangle: -45,          // Rotate labels for better readability\n    },\n    yaxis: {\n      tickmode: 'array',        // Use tickmode 'array' to manually set Y-axis labels\n      tickvals: uniqueMonikers, // Set tick values to all unique monikers\n      ticktext: uniqueMonikers, // Display all monikers as text on Y-axis\n      showgrid: true            // Ensure gridlines on Y-axis\n    },\n    margin: {\n      l: 200,  // Adjust margin for longer moniker names\n      t: 20,   // Reduce top margin\n      b: 120,  // Adjust bottom margin for X-axis labels\n    }\n  }\n};\n\n// Function to map the ve status to its corresponding meaning\n// ref; https://github.com/cometbft/cometbft/blob/v0.38.x/proto/tendermint/types/validator.pb.go\nfunction getStatusMeaning(status) {\n  switch(status) {\n    case 1:\n      return 'Absent';\n    case 2:\n      return 'Commit';\n    case 3:\n      return 'Nil';\n    default:\n      return 'Unknown';\n  }\n}",
+        "script": "// Extracting the SQL data\nlet series = data.series[0];\nif (!series || series.length === 0 || series.fields[0].values.length === 0) {\n  return {\n    data: [],\n    layout: {\n      title: 'No Data Available',\n      height: 10,\n      margin: { l: 20, r: 20, t: 40, b: 40 }\n    }\n  };\n}\n\n// Map series fields\nlet height = series.fields[0];   // Still needed for hover\nlet voted = series.fields[1];\nlet moniker = series.fields[2];\nlet epoch = series.fields[3];    // New X-axis\n\n// Use epoch as the X-axis\nlet uniqueEpochs = [...new Set(epoch.values)].sort((a, b) => b - a);  // Sort descending\nlet uniqueMonikers = [...new Set(moniker.values)].sort().reverse();\n\n// Initialize z-values and hover text\nlet zValues = Array(uniqueMonikers.length).fill(null).map(() => Array(uniqueEpochs.length).fill(0));\nlet hoverText = Array(uniqueMonikers.length).fill(null).map(() => Array(uniqueEpochs.length).fill(\"\"));\n\n// Populate data\nfor (let i = 0; i < epoch.values.length; i++) {\n  let rowIndex = uniqueMonikers.indexOf(moniker.values[i]);\n  let colIndex = uniqueEpochs.indexOf(epoch.values[i]);\n  zValues[rowIndex][colIndex] = voted.values[i];\n  let statusMeaning = getStatusMeaning(voted.values[i]);\n  hoverText[rowIndex][colIndex] = `x: ${epoch.values[i]}<br>y: ${moniker.values[i]}<br>z: ${statusMeaning}(height: ${height.values[i]})`;\n}\n\n// Define color scale\nlet colorScale = [\n  [0, 'rgba(128, 128, 128, 0.5)'],  // Inactive\n  [0.33, 'rgba(255, 0, 0, 0.5)'],   // Missed\n  [0.66, 'rgba(0, 0, 0, 0.5)'],     // Voted\n  [1, 'rgba(255, 255, 0, 0.5)']     // Nil\n];\n\n// Plotly heatmap config\nreturn {\n  data: [{\n    z: zValues,\n    x: uniqueEpochs,  // Now using epochs for X-axis\n    y: uniqueMonikers,\n    type: 'heatmap',\n    colorscale: colorScale,\n    showscale: false,\n    zmin: 0,\n    zmax: 3,\n    xgap: 5,\n    ygap: 5,\n    text: hoverText,\n    hoverinfo: 'text'\n  }],\n  layout: {\n    xaxis: {\n      type: 'category',\n      tickmode: 'linear',\n      showgrid: true,\n      tickformat: '.0f',\n      tickangle: -45\n    },\n    yaxis: {\n      tickmode: 'array',\n      tickvals: uniqueMonikers,\n      ticktext: uniqueMonikers,\n      showgrid: true\n    },\n    margin: {\n      l: 200,\n      t: 20,\n      b: 120\n    }\n  }\n};\n\n// Helper to decode vote status\nfunction getStatusMeaning(status) {\n  switch(status) {\n    case 1: return 'Absent';\n    case 2: return 'Commit';\n    case 3: return 'Nil';\n    default: return 'Unknown';\n  }\n}",
         "syncTimeRange": false,
         "timeCol": ""
       },
@@ -614,7 +907,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH epoch AS (\n  SELECT MAX(epoch) as max_epoch FROM babylon_checkpoint_${chain_id}\n)\n select\n  idx.height,\n  idx.status,\n  vi.moniker AS moniker,\n  idx.epoch\nFROM\n  babylon_checkpoint_${chain_id} idx\nJOIN\n  meta.validator_info vi\n  ON idx.validator_hex_address_id = vi.id\nJOIN\n  epoch\n  ON idx.epoch BETWEEN (epoch.max_epoch - 30) AND epoch.max_epoch\nORDER by\n  idx.height DESC\n",
+          "rawSql": "\n\n select\n  idx.height, \n  idx.status,\n  vi.moniker AS moniker,\n  idx.epoch\nFROM\n  babylon_checkpoint_bbn_1 idx\nJOIN\n  meta.validator_info vi\n  ON idx.validator_hex_address_id = vi.id\nWHERE\n  idx.epoch >= (\n    SELECT MAX(epoch) - (${epochs} - 1)\n    FROM babylon_checkpoint_${table_chain_id}\n  )\nORDER BY\n  idx.epoch desc",
           "refId": "A",
           "sql": {
             "columns": [
@@ -636,7 +929,6 @@
         }
       ],
       "title": "Checkpoint BLS Vote Status",
-      "transparent": true,
       "type": "nline-plotlyjs-panel"
     }
   ],
@@ -648,21 +940,21 @@
     "list": [
       {
         "current": {
-          "text": "bbn_test_5",
-          "value": "bbn_test_5"
+          "text": "bbn-test-5",
+          "value": "bbn-test-5"
         },
         "datasource": {
           "type": "prometheus",
           "uid": "cvms_exporter_db"
         },
-        "definition": "label_values(cvms_block_timestamp,table_chain_id)",
+        "definition": "label_values(cvms_block_timestamp{chain=\"babylon\"},chain_id)",
         "includeAll": false,
         "label": "Chain ID",
         "name": "chain_id",
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(cvms_block_timestamp,table_chain_id)",
+          "query": "label_values(cvms_block_timestamp{chain=\"babylon\"},chain_id)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
@@ -671,14 +963,15 @@
       },
       {
         "current": {
-          "text": "babylon",
-          "value": "babylon"
+          "text": "",
+          "value": ""
         },
         "datasource": {
           "type": "prometheus",
           "uid": "cvms_exporter_db"
         },
         "definition": "label_values(cvms_block_timestamp{table_chain_id=\"$chain_id\"},chain)",
+        "hide": 2,
         "includeAll": false,
         "label": "Chain",
         "name": "chain",
@@ -691,6 +984,83 @@
         "refresh": 1,
         "regex": "",
         "type": "query"
+      },
+      {
+        "current": {
+          "text": "bbn_test_5",
+          "value": "bbn_test_5"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "cvms_exporter_db"
+        },
+        "definition": "label_values(cvms_block_height{chain_id=\"$chain_id\"},table_chain_id)",
+        "description": "",
+        "hide": 2,
+        "name": "table_chain_id",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(cvms_block_height{chain_id=\"$chain_id\"},table_chain_id)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "30",
+          "value": "30"
+        },
+        "description": "the block number to monitor",
+        "label": "monitor_blocks",
+        "name": "blocks",
+        "options": [
+          {
+            "selected": true,
+            "text": "30",
+            "value": "30"
+          }
+        ],
+        "query": "30",
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "text": "10",
+          "value": "10"
+        },
+        "description": "the number of epochs to monitor BLS signing",
+        "label": "monitor epochs",
+        "name": "epochs",
+        "options": [
+          {
+            "selected": true,
+            "text": "10",
+            "value": "10"
+          }
+        ],
+        "query": "50",
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "text": "100",
+          "value": "100"
+        },
+        "description": "the number of blocks to monitor BTC lightclient module txs",
+        "label": "lightclient blocks",
+        "name": "lightclient_blocks",
+        "options": [
+          {
+            "selected": true,
+            "text": "100",
+            "value": "100"
+          }
+        ],
+        "query": "100",
+        "type": "textbox"
       }
     ]
   },
@@ -702,6 +1072,6 @@
   "timezone": "browser",
   "title": "Babylon Dashboard",
   "uid": "babylon_dashboard",
-  "version": 5,
+  "version": 1,
   "weekStart": ""
 }

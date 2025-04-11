@@ -198,6 +198,25 @@ bbn-test-5:
     - babylon-finality-provider-indexer
     - babylon-finality-provider-uptime
     - babylon-btc-delegations
+bbn-1:
+  chain_name: babylon
+  protocol_type: cosmos
+  mainnet: true
+  support_asset:
+    denom: ubbn
+    decimal: 6
+  packages:
+    - block
+    - upgrade
+    - uptime
+    - voteindexer
+    - block-data-analytics
+    - babylon-checkpoint
+    - babylon-btc-lightclient
+    - babylon-covenant-committee
+    - babylon-finality-provider-indexer
+    - babylon-finality-provider-uptime
+    - babylon-btc-delegations        
 bitcanna-1:
   chain_name: bitcanna
   protocol_type: cosmos
@@ -932,7 +951,7 @@ nyx:
   protocol_type: cosmos
   mainnet: true
   support_asset:
-    denom: unyx
+    denom: unym
     decimal: 6
   packages:
     - block

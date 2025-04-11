@@ -19,6 +19,7 @@ tests/test.go
 config.yaml
 docker-compose.override.yaml
 custom-prometheus.yaml
+**/custom_rules/
 custom-alertmanager.yaml
 custom_chains.yaml
 

@@ -1,22 +1,23 @@
 groups:
-  - name: BabylonFinalityProviderUptimePackage
+  - name: BabylonFinalityProviderPackage
     rules:
-      # NOTE: for weekly uptime checking
-      # sort_desc(delta(cvms_uptime_missed_blocks_counter[1h]) / on (chain_id) group_left max by (chain_id) (delta(cvms_block_height[1h])) * 100 > 0)
+    - alert: IncreasingBabylonMissedVotesOver5PercentDuring1h
+      expr: (delta(cvms_babylon_finality_provider_missed_votes_counter[1h]) / on (chain_id) group_left max by (chain_id) (delta(cvms_block_height[1h]))) * 100 > 5
+      labels:
+        severity: warning
+      annotations:
+        summary: |
+          'In {{ $labels.chain }}-{{ $labels.chain_id }} network, the validator has missed Babylon votes'
+        description: |
+          '{{ $labels.moniker }} has missed more than 5% (actual: {{ printf "%.2f" $value }}%) of votes in the last hour. Please check your Babylon signer or node status.'
 
-      # - alert: IncreasingConsensusMissCounterOver10%During1h
-      #   expr: (delta(cvms_uptime_missed_blocks_counter[1h]) / on (chain_id) group_left max by (chain_id) (delta(cvms_block_height[1h]))) * 100 > 5
-      #   labels:
-      #     severity: warning
-      #   annotations:
-      #     summary: 'In {{ $labels.chain }}-{{ $labels.chain_id }} network, The Validator have missed some blocks'
-      #     description: '{{ $labels.moniker }} had missed some blocks for consensus. Please check your node or signer status'
-
-      # - alert: Remaining1000BlocksBeforeGettingSlashing
-      #   # max missed - current missed 
-      #   expr: |
-      #     ceil(cvms_uptime_signed_blocks_window * (1 - cvms_uptime_min_signed_per_window)) - on (chain_id) group_right () cvms_uptime_missed_blocks_counter < 1000
-      #   labels:
-      #     severity: critical
-      #   annotations:
-      #     summary: The Validator's is missing too many! Check your validator in {{ $labels.chain }}-{{ $labels.chain_id }} network
+  - name: BabylonCheckpointPackage
+    rules:
+    - alert: BabylonCheckpointBLSSignatureMissedOver1During1h
+      expr: delta(cvms_babylon_checkpoint_bls_signature_missed_total{status!="BLOCK_ID_FLAG_COMMIT"}[1h]) > 1
+      labels:
+        severity: warning
+      annotations:
+        summary: 'In {{ $labels.chain }}-{{ $labels.chain_id }} network, missed BLS signatures detected for Babylon checkpoints'
+        description: '{{ $labels.moniker }} has missed more than 1 BLS signature with status "{{ $labels.status }}" in the last hour. Please investigate your Babylon signer or validator node setup.'
+        

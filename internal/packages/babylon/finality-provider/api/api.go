@@ -10,6 +10,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const finalitySigTimeout = 3
+
 func GetFinalityProviderUptime(exporter *common.Exporter) (types.BabylonFinalityProviderUptimeStatues, error) {
 	// 1. get finality provider infos
 	finalityProviderInfos, err := commonapi.GetBabylonFinalityProviderInfos(exporter.CommonClient)
@@ -55,11 +57,7 @@ func GetFinalityProviderUptime(exporter *common.Exporter) (types.BabylonFinality
 		return types.BabylonFinalityProviderUptimeStatues{}, errors.Wrap(err, "failed to get babylon finality provider parameters")
 	}
 
-	// 1. check last finalized height
-	lastFinalizedBlockHeight, err := commonapi.GetLastFinalizedBlockHeight(exporter.CommonClient)
-	if err != nil {
-		return types.BabylonFinalityProviderUptimeStatues{}, errors.Wrap(err, "failed to get last finalized block height")
-	}
+	lastFinalizedBlockHeight := (latestBlockHeight - finalitySigTimeout)
 
 	// 2. check total votes at that height
 	votes, err := commonapi.GetFinalityVotesByHeight(exporter.CommonClient, lastFinalizedBlockHeight)

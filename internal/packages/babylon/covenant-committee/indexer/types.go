@@ -17,8 +17,8 @@ const (
 
 	//Babylon official remote assets
 	//https://github.com/babylonlabs-io/networks
-	BabylonCovenantCommitteeMonikerFromMainnet = "" // TODO: Wait runching babylon mainnet...
-	BabylonCovenantCommitteeMonikerFromTestnet = "https://raw.githubusercontent.com/babylonlabs-io/networks/60e30f437b155b6027f43636aee729dc2d964e37/bbn-test-5/covenant-committee.json"
+	BabylonCovenantCommitteeMonikerFromMainnet = "https://github.com/babylonlabs-io/networks/raw/refs/heads/main/bbn-1/covenant-committee.json"
+	BabylonCovenantCommitteeMonikerFromTestnet = "https://github.com/babylonlabs-io/networks/raw/refs/heads/main/bbn-test-5/covenant-committee.json"
 )
 
 var (

@@ -51,10 +51,11 @@ type CovenantCommitteeInfo struct {
 }
 
 func (cci CovenantCommitteeInfo) String() string {
-	return fmt.Sprintf("CovenantCommitteeInfo<%d %d %s>",
+	return fmt.Sprintf("CovenantCommitteeInfo<%d %d %s %s>",
 		cci.ID,
 		cci.ChainInfoID,
 		cci.CovenantBtcPk,
+		cci.Moniker,
 	)
 }
 

@@ -52,3 +52,11 @@ groups:
           summary: 'There are skipped packages in the CVMS service.'
           description: |
             The {{ $labels.package }} service being collected from {{ $labels.instance_name }} has been skipped.
+            
+      - alert: IndexerPackageSyncDelayedOver5Minutes
+        expr: time() - cvms_root_index_pointer_timestamp{package!~"babylon-checkpoint"} > 300
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Indexer package "{{ $labels.package }}" is delayed over 5 minutes'
+          description: 'The indexer for package "{{ $labels.package }}" in chain {{ $labels.chain }}-{{ $labels.chain_id }} is out of sync by more than 5 minutes. Please check the indexer status or logs.'

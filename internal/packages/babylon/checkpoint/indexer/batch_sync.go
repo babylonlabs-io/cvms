@@ -8,6 +8,8 @@ import (
 
 	tmtypes "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmostation/cvms/internal/common/api"
+	"github.com/cosmostation/cvms/internal/helper/db"
+
 	"github.com/cosmostation/cvms/internal/common/function"
 	indexertypes "github.com/cosmostation/cvms/internal/common/indexer/types"
 	"github.com/cosmostation/cvms/internal/common/types"
@@ -46,9 +48,11 @@ func (idx *CheckpointIndexer) batchSync(lastIndexPointerEpoch int64) (
 		return lastIndexPointerEpoch, errors.Wrap(err, "failed to parse current epoch response")
 	}
 
-	if (currentEpoch - newIndexerPointerEpoch) > InitEpochInterval {
-		newIndexerPointerEpoch = currentEpoch - InitEpochInterval
-		idx.Infof("changed index pointer epoch: %d to ignore old epoch data", newIndexerPointerEpoch)
+	if idx.RetentionPeriod != db.PersistenceMode {
+		if (currentEpoch - newIndexerPointerEpoch) > InitEpochInterval {
+			newIndexerPointerEpoch = currentEpoch - InitEpochInterval
+			idx.Infof("changed index pointer epoch: %d to ignore old epoch data", newIndexerPointerEpoch)
+		}
 	}
 
 	lastFinalizedEpoch := (currentEpoch - 1)
