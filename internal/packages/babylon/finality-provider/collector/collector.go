@@ -65,6 +65,7 @@ func loop(exporter *common.Exporter, p common.Packager) {
 		Subsystem:   Subsystem,
 		Name:        MissedVotesCounterMetricName,
 		ConstLabels: packageLabels,
+		Help:        "Current Missed votes counter of finality provider",
 	}, []string{
 		common.MonikerLabel,
 		common.OrchestratorAddressLabel,
@@ -100,6 +101,7 @@ func loop(exporter *common.Exporter, p common.Packager) {
 		Subsystem:   Subsystem,
 		Name:        VotingPowerMetricName,
 		ConstLabels: packageLabels,
+		Help:        "Voting power of individual Finality Providers",
 	}, []string{
 		common.MonikerLabel,
 		common.OrchestratorAddressLabel,
@@ -150,6 +152,7 @@ func loop(exporter *common.Exporter, p common.Packager) {
 		Subsystem:   Subsystem,
 		Name:        METRIC_NAME_FINALITY_PROVIDERS_TOTAL,
 		ConstLabels: packageLabels,
+		Help:        "Total number of Finality Providers categorized by their status",
 	}, []string{
 		common.StatusLabel,
 	})

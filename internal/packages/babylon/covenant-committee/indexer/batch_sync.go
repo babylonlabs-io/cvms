@@ -49,6 +49,7 @@ func (idx *CovenantSignatureIndexer) batchSync(lastIndexPointerHeight, newIndexP
 
 	// This timestamp for metrics
 	var endBlockTimestamp time.Time
+	var isUnknownCovenantCommittee = false
 
 	_ = covenantSignatureList
 	for height := startHeight; height <= endHeight; height++ {
@@ -148,17 +149,11 @@ func (idx *CovenantSignatureIndexer) batchSync(lastIndexPointerHeight, newIndexP
 
 				newBtcDelegations = append(newBtcDelegations, newBtcDelegation)
 			}
-
-			ch1 <- helper.Result{
-				Item:    newBtcDelegations,
-				Success: true,
-			}
-
 			for _, e := range covenantSigEvents {
-				// It's not yet clear if Committee members can change dynamically, we've added some temporary code to prevent panic
 				pkID, exists := idx.covenantCommitteeMap[e.CovenantBtcPkHex]
 				if !exists {
 					idx.Errorf("Missing covenant committee entry for PK: %s", e.CovenantBtcPkHex)
+					isUnknownCovenantCommittee = true
 					continue
 				}
 
@@ -171,6 +166,11 @@ func (idx *CovenantSignatureIndexer) batchSync(lastIndexPointerHeight, newIndexP
 				}
 
 				newBcsList = append(newBcsList, newCovenantSignature)
+			}
+
+			ch1 <- helper.Result{
+				Item:    newBtcDelegations,
+				Success: true,
 			}
 
 			ch2 <- helper.Result{
@@ -216,14 +216,27 @@ func (idx *CovenantSignatureIndexer) batchSync(lastIndexPointerHeight, newIndexP
 		}
 	}
 
-	// 1. Insert Babylon Btc Delegations Tx
-	err := idx.btcDelRepo.InsertBabylonBtcDelegationsList(idx.ChainInfoID, btcDelegationsList)
-	if err != nil {
-		return lastIndexPointerHeight, err
+	if isUnknownCovenantCommittee {
+		//Update new covenant committee list
+		newCovenantCommitteeInfoList, err := idx.getNewCovenantCommitteeInfoList()
+		if err != nil {
+			return lastIndexPointerHeight, errors.Wrap(err, "failed to get new covenant committee info list")
+		}
+
+		err = idx.csRepo.UpsertCovenantCommitteeInfoList(newCovenantCommitteeInfoList)
+		if err != nil {
+			return lastIndexPointerHeight, errors.Wrap(err, "failed to upsert covenant committee info list for database")
+		}
+
+		err = idx.FetchValidatorInfoList()
+		if err != nil {
+			return lastIndexPointerHeight, errors.Wrap(err, "failed to fetch covenant committe info list")
+		}
+		return lastIndexPointerHeight, errors.Wrap(err, "found an unknown Covenant Committee member. Processing with the update.")
 	}
 
-	// 2. update sig status
-	err = idx.csRepo.InsertBabylonCovenantSignatureList(idx.ChainInfoID, endHeight, covenantSignatureList)
+	// insert committee sig status, btc delegation status
+	err := idx.csRepo.InsertBabylonCovenantSignatureList(idx.ChainInfoID, endHeight, covenantSignatureList, btcDelegationsList)
 	if err != nil {
 		return lastIndexPointerHeight, err
 	}

@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.cvmsConfig.name }}
+  namespace: {{ default .Release.Namespace .Values.namespaceOverride | quote }}
+  labels:
+    {{- include "cvms.labels" . | nindent 4 }}
+    {{- with .Values.cvmsConfig.extraLabels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- if .Values.cvmsConfig.annotations }}
+  annotations:
+{{ toYaml .Values.cvmsConfig.annotations | indent 4 }}
+{{- end }}
+data:
+  config.yaml: |
+    monikers: {{ .Values.cvmsConfig.monikers | toJson }}
+
+    chains: {{- if .Values.cvmsConfig.chains }}
+      {{- .Values.cvmsConfig.chains | toYaml | nindent 6 }}
+    {{- else }} []
+    {{- end }}
+

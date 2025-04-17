@@ -30,7 +30,7 @@ func NewRepository(indexerDB common.IndexerDB, indexName string, sqlTimeout time
 	return CheckpointIndexerRepository{indexName, sqlTimeout, indexerDB.DB, metarepo}
 }
 
-func (repo *CheckpointIndexerRepository) GetLastEpoch() (int64, error) {
+func (repo *CheckpointIndexerRepository) GetLastEpoch(chainInfoID int64) (int64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), repo.sqlTimeout)
 	defer cancel()
 
@@ -38,6 +38,7 @@ func (repo *CheckpointIndexerRepository) GetLastEpoch() (int64, error) {
 	err := repo.
 		NewSelect().
 		Model(bve).
+		Where("chain_info_id = ?", chainInfoID).
 		Order("height DESC").
 		Limit(1).
 		Scan(ctx)

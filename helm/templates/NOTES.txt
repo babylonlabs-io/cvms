@@ -1,0 +1,11 @@
+1. Get the application URL by running these commands:
+
+    NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+                You can watch the status of by running 'kubectl get svc -w'
+
+    export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "cvms.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    echo http://$SERVICE_IP:{{ .Values.indexer.service.port }}
+
+2. To delete the release, run:
+
+    helm delete {{ .Release.Name }} --namespace {{ .Release.Namespace }}

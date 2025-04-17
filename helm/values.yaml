@@ -1,0 +1,484 @@
+# Default values for cvms.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+imagePullSecrets: []
+
+nameOverride: ""
+
+fullnameOverride: ""
+
+namespaceOverride: ""
+
+# For devents, testnets, localnet even if unsupported mainnets, Use custom_chains.yaml.example for CVMS
+# Edit custom chains at helm/files/custom_chains.yaml.example
+customChainsConfig:
+  enabled: false
+  name: "custom-chains-cm"
+  annotations: {}
+  extraLabels: {}
+
+cvmsConfig:
+  name: "cvms-cm"
+  annotations: {}
+  extraLabels: {}
+  # NOTE: Customize this variables by your needs
+  # 1. network mode:
+  #   ex) monikers: ['all']
+  #   des) This will enable network mode to monitor all validators status in the blockchain network
+  #
+  # 2. validator mode:
+  #   ex) monikers: ['Cosmostation1', 'Cosmostation2']
+  #   des) This will enable validator mode for whitelisted specific validators
+  # Example reference: https://github.com/cosmostation/cvms/blob/develop/docs/setup.md
+  monikers: []
+  chains: []
+  # - display_name: 'cosmos'
+  #   # NOTE: chain_id is a key for support_chains list. YOU SHOULD match correct CHAIN ID
+  #   chain_id: cosmoshub-4
+  #   # NOTE: these addresses will be used for balance usage tracking such as validator, broadcaster or something.
+  #   tracking_addresses:
+  #     - 'cosmos1clpqr4nrk4khgkxj78fcwwh6dl3uw4ep4tgu9q'
+  #   nodes:
+  #     # NOTE: currently grpc endpoint doesn't support ssl
+  #     - rpc: 'https://rpc-cosmos.endpoint.xyz'
+  #       api: 'https://lcd-cosmos.endpoint.xyz'
+  #       grpc: 'grpc-cosmos.endpoint.xyz:9090'
+
+indexer:
+  replicaCount: 1
+
+  image:
+    repository: cosmostation/cvms
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "latest"
+
+  command:
+    - /bin/cvms
+  args:
+    - start
+    - indexer
+    - --config=/var/lib/cvms/config.yaml
+    - --log-color-disable
+    - "false"
+    - --log-level
+    - "4"
+    - --port=9300
+
+  env:
+    DB_RETENTION_PERIOD: 1h
+
+  # -- Number of old deployment ReplicaSets to retain. The rest will be garbage collected.
+  revisionHistoryLimit: 2
+
+  podAnnotations: {}
+  # Do not change these keys that are already defined
+  # app.kubernetes.io/instance: 
+  # app.kubernetes.io/managed-by: 
+  # app.kubernetes.io/name:
+  # app.kubernetes.io/version:
+  # argocd.argoproj.io/instance:
+  # helm.sh/chart:
+  podLabels: {}
+    # app.kubernetes.io/name: 
+    # app.kubernetes.io/branch-of:
+
+  podSecurityContext:
+    enabled: false
+    yamlSyntax:
+      fsGroup: 2000
+
+  securityContext:
+    enabled: true
+    yamlSyntax:
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1000
+
+  service:
+    type: ClusterIP
+    port: 9300
+
+  resources:
+    enabled: true
+    yamlSyntax:
+      # We usually recommend not to specify default resources and to leave this as a conscious
+      # choice for the user. This also increases chances charts run on environments with little
+      # resources, such as Minikube. If you do want to specify resources, uncomment the following
+      # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+  livenessProbe:
+    enabled: true
+    yamlSyntax:
+      httpGet:
+        path: /metrics
+        port: metrics
+  readinessProbe:
+    enabled: true
+    yamlSyntax:
+      httpGet:
+        path: /metrics
+        port: metrics
+
+  # Additional volumes on the output Deployment definition and also mounting configmap.
+  volumes:
+    - configMap:
+        items:
+          - key: support_chains.yaml
+            path: support_chains.yaml
+        name: support-chains-cm
+      name: support-chains-cm
+    - configMap:
+        items:
+          - key: config.yaml
+            path: config.yaml
+        name: cvms-cm
+      name: cvms-cm
+    - name: init-script
+      configMap:
+        name: postgresql-init-script
+        defaultMode: 0421
+
+  # Additional volumeMounts on the output Deployment definition and also mounting configmap.
+  volumeMounts:
+    - mountPath: /var/lib/cvms/docker/cvms/support_chains.yaml
+      name: support-chains-cm
+      readOnly: true
+      subPath: support_chains.yaml
+    - mountPath: /var/lib/cvms/config.yaml
+      name: cvms-cm
+      readOnly: true
+      subPath: config.yaml
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+  ## Server metrics service configuration
+  metrics:
+    # -- Metrics service type
+    type: ClusterIP
+    # -- Metrics service clusterIP. `None` makes a "headless service" (no virtual IP)
+    clusterIP: ""
+    # -- Metrics service annotations
+    annotations: {}
+    # -- Metrics service labels
+    # Do not use these keys for labels: app.kubernetes.io/namespace and app.kubernetes.io/metrics-enabled
+    labels: {}
+    # -- Metrics service port
+    servicePort: 9300
+    # -- Metrics service port name
+    portName: http-metrics
+  serviceMonitor:
+    # -- Enable a prometheus ServiceMonitor
+    enabled: false
+    # -- Prometheus ServiceMonitor interval
+    interval: 15s
+    # -- Prometheus ServiceMonitor scrapeTimeout. If empty, Prometheus uses the global scrape timeout unless it is less than the target's scrape interval value in which the latter is used.
+    scrapeTimeout: ""
+    # path to scrape metrics:
+    path: "/metrics"
+    # -- Prometheus [RelabelConfigs] to apply to samples before scraping
+    relabelings: []
+    # -- Prometheus [MetricRelabelConfigs] to apply to samples before ingestion
+    metricRelabelings: []
+    # -- Prometheus ServiceMonitor selector
+    selector: {}
+      # prometheus: kube-prometheus
+
+    # -- Prometheus ServiceMonitor scheme
+    scheme: ""
+    # -- Prometheus ServiceMonitor tlsConfig
+    tlsConfig: {}
+    # -- Prometheus ServiceMonitor namespace
+    namespace: ""  # monitoring
+    # -- Prometheus ServiceMonitor labels
+    additionalLabels: {}
+    # -- Prometheus ServiceMonitor annotations
+    annotations: {}
+
+  initContainers:
+    enabled: true  # Set to false if you want to disable the init-schema container
+    containers:
+      - name: init-schema
+        image: docker.io/alpine:latest
+        imagePullPolicy: IfNotPresent
+        command:
+          - "/bin/sh"
+          - "-c"
+        args:
+          - apk add --no-cache curl jq postgresql-client; /scripts/init-schema.sh
+        volumeMounts:
+          - name: init-script
+            mountPath: /scripts
+            readOnly: false
+
+exporter:
+  replicaCount: 1
+
+  image:
+    repository: cosmostation/cvms
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "latest"
+
+  command:
+    - /bin/cvms
+  args:
+    - start
+    - exporter
+    - --config=/var/lib/cvms/config.yaml
+    - --log-color-disable
+    - "false"
+    - --log-level
+    - "4"
+    - --port=9200
+
+  env: {}
+    # DB_HOST: localhost
+    # DB_PORT: "5432"
+
+  # -- Number of old deployment ReplicaSets to retain. The rest will be garbage collected.
+  revisionHistoryLimit: 2
+
+  podAnnotations: {}
+  # Do not change these keys that are already defined
+  # app.kubernetes.io/instance: 
+  # app.kubernetes.io/managed-by: 
+  # app.kubernetes.io/name:
+  # app.kubernetes.io/version:
+  # argocd.argoproj.io/instance:
+  # helm.sh/chart:
+  podLabels: {}
+    # app.kubernetes.io/name: 
+    # app.kubernetes.io/branch-of:
+
+  podSecurityContext:
+    enabled: false
+    yamlSyntax:
+      fsGroup: 2000
+
+  securityContext:
+    enabled: true
+    yamlSyntax:
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1000
+
+  service:
+    type: ClusterIP
+    port: 9200
+
+  resources:
+    enabled: true
+    yamlSyntax:
+      # We usually recommend not to specify default resources and to leave this as a conscious
+      # choice for the user. This also increases chances charts run on environments with little
+      # resources, such as Minikube. If you do want to specify resources, uncomment the following
+      # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+  livenessProbe:
+    enabled: true
+    yamlSyntax:
+      httpGet:
+        path: /metrics
+        port: metrics
+  readinessProbe:
+    enabled: true
+    yamlSyntax:
+      httpGet:
+        path: /metrics
+        port: metrics
+
+  # Additional volumes on the output Deployment definition and also mounting configmap.
+  volumes:
+    - configMap:
+        items:
+          - key: support_chains.yaml
+            path: support_chains.yaml
+        name: support-chains-cm
+      name: support-chains-cm
+    - configMap:
+        items:
+          - key: config.yaml
+            path: config.yaml
+        name: cvms-cm
+      name: cvms-cm
+
+  # Additional volumeMounts on the output Deployment definition and also mounting configmap.
+  volumeMounts:
+    - mountPath: /var/lib/cvms/docker/cvms/support_chains.yaml
+      name: support-chains-cm
+      readOnly: true
+      subPath: support_chains.yaml
+    - mountPath: /var/lib/cvms/config.yaml
+      name: cvms-cm
+      readOnly: true
+      subPath: config.yaml
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+  ## Server metrics service configuration
+  metrics:
+    # -- Metrics service type
+    type: ClusterIP
+    # -- Metrics service clusterIP. `None` makes a "headless service" (no virtual IP)
+    clusterIP: ""
+    # -- Metrics service annotations
+    annotations: {}
+    # -- Metrics service labels
+    # Do not use these keys for labels: app.kubernetes.io/namespace and app.kubernetes.io/metrics-enabled
+    labels: {}
+    # -- Metrics service port
+    servicePort: 9200
+    # -- Metrics service port name
+    portName: http-metrics
+  serviceMonitor:
+    # -- Enable a prometheus ServiceMonitor
+    enabled: false
+    # -- Prometheus ServiceMonitor interval
+    interval: 15s
+    # -- Prometheus ServiceMonitor scrapeTimeout. If empty, Prometheus uses the global scrape timeout unless it is less than the target's scrape interval value in which the latter is used.
+    scrapeTimeout: ""
+    # path to scrape metrics:
+    path: "/metrics"
+    # -- Prometheus [RelabelConfigs] to apply to samples before scraping
+    relabelings: []
+    # -- Prometheus [MetricRelabelConfigs] to apply to samples before ingestion
+    metricRelabelings: []
+    # -- Prometheus ServiceMonitor selector
+    selector: {}
+      # prometheus: kube-prometheus
+
+    # -- Prometheus ServiceMonitor scheme
+    scheme: ""
+    # -- Prometheus ServiceMonitor tlsConfig
+    tlsConfig: {}
+    # -- Prometheus ServiceMonitor namespace
+    namespace: ""  # monitoring
+    # -- Prometheus ServiceMonitor labels
+    additionalLabels: {}
+    # -- Prometheus ServiceMonitor annotations
+    annotations: {}
+    #  Prometheus rules
+    #  Some examples from https://github.com/cosmostation/cvms/tree/release/docker/prometheus/rules
+    #  View alert rules at helm/files
+    prometheusRule:
+      enabled: false
+      additionalLabels: {}
+      annotations: {}
+      namespace: ""
+      ruleSets:
+        - name: axelar-evm
+          enabled: true
+        - name: balance # change addresses of balance rules
+          enabled: true
+        - name: block
+          enabled: true
+        - name: consensus-vote
+          enabled: true
+        - name: eventnonce
+          enabled: true
+        - name: extension-vote
+          enabled: false
+        - name: oracle
+          enabled: true
+        - name: root
+          enabled: true
+        - name: upgrade
+          enabled: true
+        - name: uptime
+          enabled: false
+        - name: yoda
+          enabled: true
+      rules: []
+        # - alert: IncreasingMissCounterOver30%During1h
+        #   expr: |
+        #     # 30mins ago, the validator is unjailed. but got jailed 
+        #     cvms_uptime_jailed - cvms_uptime_jailed offset 30m > 0 and (cvms_uptime_jailed offset 30m == 0)
+        #   labels:
+        #     severity: critical
+        #   annotations:
+        #     summary: The validator is jailed now in {{ $labels.chain_id }}
+
+## PostgreSQL chart configuration
+## ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml
+## @param postgresql.enabled Switch to enable or disable the PostgreSQL helm chart
+## @param postgresql.auth.postgresPassword Password for the "postgres" admin user
+## @param postgresql.auth.username Name for a custom user to create
+## @param postgresql.auth.password Password for the custom user to create
+## @param postgresql.auth.database Name for a custom database to create
+## @param postgresql.auth.existingSecret Name of existing secret to use for PostgreSQL credentials
+## @param postgresql.auth.usePasswordFiles Mount credentials as a files instead of using an environment variable
+## @param postgresql.architecture PostgreSQL architecture (`standalone` or `replication`)
+##
+postgresql:
+  enabled: true
+  auth:
+    username: cvms
+    password: "mysecretpassword"
+    database: cvms
+    postgresPassword: ""
+  architecture: standalone
+  primary:
+    ## PostgreSQL Primary resource requests and limits
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+    ## @param postgresql.primary.resourcesPreset Set container resources according to one common preset (allowed values: none, nano, small, medium, large, xlarge, 2xlarge). This is ignored if primary.resources is set (primary.resources is recommended for production).
+    ## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
+    ##
+    resourcesPreset: "nano"
+    ## @param postgresql.primary.resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
+    ## Example:
+    ## resources:
+    ##   requests:
+    ##     cpu: 2
+    ##     memory: 512Mi
+    ##   limits:
+    ##     cpu: 3
+    ##     memory: 1024Mi
+    ##
+    resources: {}
+    persistence:
+      storageClass: ""
+      size: 500Mi
+  ## External PostgreSQL configuration
+  ## All of these values are only used when postgresql.enabled is set to false
+  ## @param postgresql.external.host Database host
+  ## @param postgresql.external.port Database port number
+  ## @param postgresql.external.user Non-root username for Kong
+  ## @param postgresql.external.password Password for the non-root username for Kong
+  ## @param postgresql.external.database Kong database name
+  ## @param postgresql.external.existingSecret Name of an existing secret resource containing the database credentials
+  ## @param postgresql.external.existingSecretPasswordKey Name of an existing secret key containing the database credentials
+  ##
+  external:
+    host: ""
+    port: 5432
+    user: cvms
+    password: ""
+    database: cvms

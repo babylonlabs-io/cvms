@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "cvms.fullname" . }}-exporter-metrics
+  namespace: {{ default .Release.Namespace .Values.namespaceOverride | quote }}
+  labels:
+    {{- include "cvms.exporterSelectorMetricLabels" . | nindent 4 }}
+    {{- with .Values.exporter.metrics.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- if .Values.exporter.metrics.annotations }}
+  annotations:
+    {{- range $key, $value := .Values.exporter.metrics.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ .Values.exporter.metrics.type }}
+  {{- if and .Values.exporter.metrics.clusterIP (eq .Values.exporter.metrics.type "ClusterIP") }}
+  clusterIP: {{ .Values.exporter.metrics.clusterIP }}
+  {{- end }}
+  ports:
+  - name: {{ .Values.exporter.metrics.portName }}
+    protocol: TCP
+    port: {{ .Values.exporter.metrics.servicePort }}
+    targetPort: metrics
+  selector:
+    {{- include "cvms.exporterSelectorMetricLabels" . | nindent 4 }}

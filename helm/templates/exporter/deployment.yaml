@@ -1,0 +1,117 @@
+{{ include "validateMonikers" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cvms.fullname" . }}-exporter
+  labels:
+    {{- include "cvms.labels" . | nindent 4 }}
+    {{- include "cvms.exporterSelectorMetricLabels" . | nindent 4 }}
+  namespace: {{ default .Release.Namespace .Values.namespaceOverride | quote }}
+spec:
+  replicas: {{ .Values.exporter.replicaCount }}
+  revisionHistoryLimit: {{ .Values.exporter.revisionHistoryLimit }}
+  selector:
+    matchLabels:
+      {{- include "cvms.exporterSelectorMetricLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.exporter.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "cvms.labels" . | nindent 8 }}
+        {{- include "cvms.exporterSelectorMetricLabels" . | nindent 8 }}
+        {{- with .Values.exporter.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.exporter.podSecurityContext.enabled }}
+      securityContext:
+        {{- toYaml .Values.exporter.podSecurityContext.yamlSyntax | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ include "cvms.fullname" . }}-exporter
+          {{- if .Values.exporter.securityContext.enabled }}
+          securityContext:
+            {{- toYaml .Values.exporter.securityContext.yamlSyntax | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.exporter.image.repository }}:{{ .Values.exporter.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.exporter.image.pullPolicy }}
+          {{- with .Values.exporter.command }}
+          command:
+          {{- range . }}
+            - {{ . | quote }}
+          {{- end }}
+          {{- end }}
+          {{- with .Values.exporter.args }}
+          args:
+          {{- range . }}
+            - {{ . | quote }}
+          {{- end }}
+          {{- end }}
+          {{- if (ne (len .Values.exporter.env) 0) }}
+          env:
+          {{- range $key, $value := .Values.exporter.env }}
+            - name: {{ $key }}
+              value: {{ $value }}
+          {{- end }}
+          {{- end }}
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.exporter.metrics.servicePort }}
+              protocol: TCP
+          {{- if .Values.exporter.livenessProbe.enabled }}
+          livenessProbe:
+            {{- toYaml .Values.exporter.livenessProbe.yamlSyntax | nindent 12 }}
+          {{- end }}
+          {{- if .Values.exporter.readinessProbe.enabled }}
+          readinessProbe:
+            {{- toYaml .Values.exporter.readinessProbe.yamlSyntax | nindent 12 }}
+          {{- end }}
+          {{- if .Values.exporter.resources.enabled }}
+          resources:
+            {{- toYaml .Values.exporter.resources.yamlSyntax | nindent 12 }}
+          {{- end }}
+          {{- if or .Values.customChainsConfig.enabled .Values.exporter.volumeMounts }}
+          volumeMounts:
+          {{- end }}
+          {{- with .Values.exporter.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.customChainsConfig.enabled }}
+            - mountPath: /var/lib/cvms/docker/cvms/custom_chains.yaml
+              name: custom-chains-cm
+              readOnly: true
+              subPath: custom_chains.yaml
+          {{- end }}
+      {{- if or .Values.customChainsConfig.enabled .Values.exporter.volumes }}
+      volumes:
+      {{- end }}
+      {{- with .Values.exporter.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.customChainsConfig.enabled }}
+        - configMap:
+            items:
+            - key: custom_chains.yaml.example
+              path: custom_chains.yaml
+            name: {{ .Values.customChainsConfig.name }}
+          name: custom-chains-cm
+      {{- end }}
+      {{- with .Values.exporter.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.exporter.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.exporter.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

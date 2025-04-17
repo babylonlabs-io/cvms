@@ -52,24 +52,29 @@ func ParseFinalityProviders(resp []byte) (types.FinalityProvidersResponse, error
 	return result, nil
 }
 
-func ParserFinalityParams(resp []byte) (float64, float64, error) {
+func ParserFinalityParams(resp []byte) (float64, float64, int64, error) {
 	var result types.FinalityParams
 	err := json.Unmarshal(resp, &result)
 	if err != nil {
-		return 0, 0, errors.WithStack(err)
+		return 0, 0, 0, errors.WithStack(err)
 	}
 
 	signedBlocksWindow, err := strconv.ParseFloat(result.Params.SignedBlocksWindow, 64)
 	if err != nil {
-		return 0, 0, errors.WithStack(err)
+		return 0, 0, 0, errors.WithStack(err)
 	}
 
 	minSignedPerWindow, err := strconv.ParseFloat(result.Params.MinSignedPerWindow, 64)
 	if err != nil {
-		return 0, 0, errors.WithStack(err)
+		return 0, 0, 0, errors.WithStack(err)
 	}
 
-	return signedBlocksWindow, minSignedPerWindow, nil
+	activationHeight, err := strconv.ParseInt(result.Params.FinalityActivationHeight, 10, 64)
+	if err != nil {
+		return 0, 0, 0, errors.WithStack(err)
+	}
+
+	return signedBlocksWindow, minSignedPerWindow, activationHeight, nil
 }
 
 func ParserBTCLightClientParams(resp []byte) ([]string, error) {

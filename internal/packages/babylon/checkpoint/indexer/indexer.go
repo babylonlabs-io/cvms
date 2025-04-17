@@ -59,7 +59,7 @@ func (idx *CheckpointIndexer) Start() error {
 	}
 
 	// get last epoch and save into indexer struct
-	lastDBEpoch, err := idx.repo.GetLastEpoch()
+	lastDBEpoch, err := idx.repo.GetLastEpoch(idx.ChainInfoID)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -49,6 +49,7 @@ func loop(exporter *common.Exporter, p common.Packager) {
 		Subsystem:   Subsystem,
 		Name:        TotalDelegationsMetricName,
 		ConstLabels: packageLabels,
+		Help:        "Total number of BTC delegations by delegation status",
 	}, []string{
 		common.StatusLabel,
 	})

@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "cvms.fullname" . }}-indexer-metrics
+  namespace: {{ default .Release.Namespace .Values.namespaceOverride | quote }}
+  labels:
+    {{- include "cvms.indexerSelectorMetricLabels" . | nindent 4 }}
+    {{- with .Values.indexer.metrics.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- if .Values.indexer.metrics.annotations }}
+  annotations:
+    {{- range $key, $value := .Values.indexer.metrics.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ .Values.indexer.metrics.type }}
+  {{- if and .Values.indexer.metrics.clusterIP (eq .Values.indexer.metrics.type "ClusterIP") }}
+  clusterIP: {{ .Values.indexer.metrics.clusterIP }}
+  {{- end }}
+  ports:
+  - name: {{ .Values.indexer.metrics.portName }}
+    protocol: TCP
+    port: {{ .Values.indexer.metrics.servicePort }}
+    targetPort: metrics
+  selector:
+    {{- include "cvms.indexerSelectorMetricLabels" . | nindent 4 }}

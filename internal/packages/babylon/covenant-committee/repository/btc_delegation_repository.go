@@ -8,7 +8,6 @@ import (
 	indexerrepo "github.com/cosmostation/cvms/internal/common/indexer/repository"
 	dbhelper "github.com/cosmostation/cvms/internal/helper/db"
 	"github.com/cosmostation/cvms/internal/packages/babylon/covenant-committee/model"
-	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 )
 
@@ -26,27 +25,6 @@ func NewBtcDelegationRepository(indexerDB common.IndexerDB, sqlTimeout time.Dura
 
 	// Return a repository that implements both IMetaRepository and vote-specific logic
 	return BtcDelegationRepository{sqlTimeout, indexerDB.DB, metarepo}
-}
-
-func (repo *BtcDelegationRepository) InsertBabylonBtcDelegationsList(chainInfoID int64, bbdList []model.BabylonBtcDelegation) error {
-	ctx, cancel := context.WithTimeout(context.Background(), repo.sqlTimeout)
-	defer cancel()
-
-	// if there are not any covenant signature in this block, just update index pointer
-	if len(bbdList) == 0 {
-		return nil
-	}
-
-	_, err := repo.NewInsert().
-		Model(&bbdList).
-		ExcludeColumn("id").
-		Exec(ctx)
-
-	if err != nil {
-		return errors.Wrapf(err, "failed to insert btc delegation")
-	}
-
-	return nil
 }
 
 func (repo *BtcDelegationRepository) DeleteOldBtcDelegationList(chainID, retentionPeriod string) (

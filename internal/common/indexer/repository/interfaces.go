@@ -17,6 +17,7 @@ type IMetaRepository interface {
 	CreatePartitionTable(IndexName, chainID string) error
 	InitPartitionTablesByChainInfoID(IndexName, chainID string, latestHeight int64) error
 	CreatePartitionTableInMeta(tableName, chainID string) error
+	UpdateIndexPointer(IndexName, chainID string, indexPointerHeight int64) error
 }
 
 // interface for about meta.chain_info table

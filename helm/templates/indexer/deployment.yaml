@@ -1,0 +1,141 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cvms.fullname" . }}-indexer
+  labels:
+    {{- include "cvms.labels" . | nindent 4 }}
+    {{- include "cvms.indexerSelectorMetricLabels" . | nindent 4 }}
+  namespace: {{ default .Release.Namespace .Values.namespaceOverride | quote }}
+spec:
+  replicas: {{ .Values.indexer.replicaCount }}
+  revisionHistoryLimit: {{ .Values.indexer.revisionHistoryLimit }}
+  selector:
+    matchLabels:
+      {{- include "cvms.indexerSelectorMetricLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.indexer.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "cvms.labels" . | nindent 8 }}
+        {{- include "cvms.indexerSelectorMetricLabels" . | nindent 8 }}
+        {{- with .Values.indexer.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if .Values.indexer.initContainers.enabled }}
+      initContainers:
+      {{- range .Values.indexer.initContainers.containers }}
+        - name: {{ .name }}
+          image: {{ .image }}
+          imagePullPolicy: {{ .imagePullPolicy }}
+          command: 
+          {{- toYaml .command | nindent 10 }}
+          args:
+          {{- toYaml .args | nindent 10 }}
+          volumeMounts:
+          {{- range .volumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath | quote }}
+          {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.indexer.podSecurityContext.enabled }}
+      securityContext:
+        {{- toYaml .Values.indexer.podSecurityContext.yamlSyntax | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ include "cvms.fullname" . }}-indexer
+          {{- if .Values.indexer.securityContext.enabled }}
+          securityContext:
+            {{- toYaml .Values.indexer.securityContext.yamlSyntax | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.indexer.image.repository }}:{{ .Values.indexer.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.indexer.image.pullPolicy }}
+          {{- with .Values.indexer.command }}
+          command:
+          {{- range . }}
+            - {{ . | quote }}
+          {{- end }}
+          {{- end }}
+          {{- with .Values.indexer.args }}
+          args:
+          {{- range . }}
+            - {{ . | quote }}
+          {{- end }}
+          {{- end }}
+          env:
+            - name: DB_HOST
+              value: {{ include "cvms.postgresql.host" . }}
+            - name: DB_NAME
+              value: {{ include "cvms.postgresql.database" . }}
+            - name: DB_PASSWORD
+              value: {{ include "cvms.postgresql.password" . }}
+            - name: DB_PORT
+              value: {{ include "cvms.postgresql.port" . }}
+            - name: DB_USER
+              value: {{ include "cvms.postgresql.user" . }}
+          {{- range $key, $value := .Values.indexer.env }}
+            - name: {{ $key }}
+              value: {{ $value }}
+          {{- end }}
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.indexer.metrics.servicePort }}
+              protocol: TCP
+          {{- if .Values.indexer.livenessProbe.enabled }}
+          livenessProbe:
+            {{- toYaml .Values.indexer.livenessProbe.yamlSyntax | nindent 12 }}
+          {{- end }}
+          {{- if .Values.indexer.readinessProbe.enabled }}
+          readinessProbe:
+            {{- toYaml .Values.indexer.readinessProbe.yamlSyntax | nindent 12 }}
+          {{- end }}
+          {{- if .Values.indexer.resources.enabled }}
+          resources:
+            {{- toYaml .Values.indexer.resources.yamlSyntax | nindent 12 }}
+          {{- end }}
+          {{- if or .Values.customChainsConfig.enabled .Values.indexer.volumeMounts }}
+          volumeMounts:
+          {{- end }}
+          {{- with .Values.indexer.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.customChainsConfig.enabled }}
+            - mountPath: /var/lib/cvms/docker/cvms/custom_chains.yaml
+              name: custom-chains-cm
+              readOnly: true
+              subPath: custom_chains.yaml
+          {{- end }}
+      {{- if or .Values.customChainsConfig.enabled .Values.indexer.volumes }}
+      volumes:
+      {{- end }}
+      {{- with .Values.indexer.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.customChainsConfig.enabled }}
+        - configMap:
+            items:
+            - key: custom_chains.yaml.example
+              path: custom_chains.yaml
+            name: {{ .Values.customChainsConfig.name }}
+          name: custom-chains-cm
+      {{- end }}
+      {{- with .Values.indexer.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.indexer.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.indexer.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

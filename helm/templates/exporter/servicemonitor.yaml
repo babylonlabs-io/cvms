@@ -1,0 +1,56 @@
+{{- if .Values.exporter.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "cvms.fullname" . }}-exporter
+  namespace: {{ default .Release.Namespace .Values.exporter.serviceMonitor.namespace | quote }}
+  labels:
+    {{- include "cvms.labels" . | nindent 4 }}
+    {{- include "cvms.exporterSelectorMetricLabels" . | nindent 4 }}
+    {{- with .Values.exporter.metrics.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.exporter.serviceMonitor.selector }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.exporter.serviceMonitor.additionalLabels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.exporter.serviceMonitor.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  endpoints:
+    - port: {{ .Values.exporter.metrics.portName }}
+      {{- with .Values.exporter.serviceMonitor.interval }}
+      interval: {{ . }}
+      {{- end }}
+      {{- with .Values.exporter.serviceMonitor.scrapeTimeout }}
+      scrapeTimeout: {{ . }}
+      {{- end }}
+      {{- with .Values.exporter.serviceMonitor.path }}
+      path: {{ . }}
+      {{- end }}
+      {{- with .Values.exporter.serviceMonitor.relabelings }}
+      relabelings:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.exporter.serviceMonitor.metricRelabelings }}
+      metricRelabelings:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.exporter.serviceMonitor.scheme }}
+      scheme: {{ . }}
+      {{- end }}
+      {{- with .Values.exporter.serviceMonitor.tlsConfig }}
+      tlsConfig:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  namespaceSelector:
+    matchNames:
+      - {{ default .Release.Namespace .Values.namespaceOverride | quote }}
+  selector:
+    matchLabels:
+      {{- include "cvms.exporterSelectorMetricLabels" . | nindent 6 }}
+{{- end }}

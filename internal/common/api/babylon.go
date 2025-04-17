@@ -211,26 +211,26 @@ func GetFinalityProviderUptime(c common.CommonClient, fpInfoList []types.Finalit
 	return validatorResult, nil
 }
 
-func GetBabylonFinalityProviderParams(c common.CommonClient) (float64, float64, error) {
+func GetBabylonFinalityProviderParams(c common.CommonClient) (float64, float64, int64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
 	defer cancel()
 
 	requester := c.APIClient.R().SetContext(ctx)
 	resp, err := requester.Get(types.BabylonFinalityParamsQueryPath)
 	if err != nil {
-		return 0, 0, errors.Errorf("rpc call is failed from %s: %s", resp.Request.URL, err)
+		return 0, 0, 0, errors.Errorf("rpc call is failed from %s: %s", resp.Request.URL, err)
 	}
 
 	if resp.StatusCode() != http.StatusOK {
-		return 0, 0, errors.Errorf("stanage status code from %s: [%d]", resp.Request.URL, resp.StatusCode())
+		return 0, 0, 0, errors.Errorf("stanage status code from %s: [%d]", resp.Request.URL, resp.StatusCode())
 	}
 
-	signedBlocksWindow, minSignedPerWindow, err := parser.ParserFinalityParams(resp.Body())
+	signedBlocksWindow, minSignedPerWindow, activationHeight, err := parser.ParserFinalityParams(resp.Body())
 	if err != nil {
-		return 0, 0, errors.WithStack(err)
+		return 0, 0, 0, errors.WithStack(err)
 	}
 
-	return signedBlocksWindow, minSignedPerWindow, nil
+	return signedBlocksWindow, minSignedPerWindow, activationHeight, nil
 }
 
 func GetBabylonBTCLightClientParams(c common.CommonClient) ([]string, error) {

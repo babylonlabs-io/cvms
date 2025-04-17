@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -13,7 +14,8 @@ const (
 var PersistenceMode string = "persistence"
 
 // Parse retention period
-func ParseRetentionPeriod(retentionPeriod string) (time.Duration, error) {
+func ParseRetentionPeriod(rawRetentionPeriod string) (time.Duration, error) {
+	retentionPeriod := strings.TrimSpace(rawRetentionPeriod) // ← 공백 제거
 	if retentionPeriod == PersistenceMode {
 		return maxDuration, nil
 	}

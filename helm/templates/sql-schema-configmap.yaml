@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgresql-init-script
+  namespace: {{ default .Release.Namespace .Values.namespaceOverride | quote }}
+data:
+  init-schema.sh: |
+    #!/bin/sh
+
+    # Exit on error
+    set -e
+
+    # Variables
+    DB_HOST={{ include "cvms.postgresql.host" . }}
+    DB_PORT={{ include "cvms.postgresql.port" . }}
+    DB_USER={{ include "cvms.postgresql.user" . }}
+    DB_NAME={{ include "cvms.postgresql.database" . }}
+    DB_PASSWORD={{ include "cvms.postgresql.password" . }}
+
+    # GitHub API URL for the schema directory
+    SCHEMA_API_URL="https://api.github.com/repos/cosmostation/cvms/contents/docker/postgres/schema"
+
+    # Fetch schema URLs dynamically
+    echo "Fetching schema URLs from GitHub..."
+    SCHEMA_URLS=$(curl -s "$SCHEMA_API_URL" | jq -r '.[].download_url')
+
+    echo "Found the following schema files:"
+    echo "$SCHEMA_URLS"
+
+    # Wait for PostgreSQL to be ready
+    echo "Waiting for PostgreSQL to be ready..."
+    until pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER"; do
+      sleep 2
+    done
+
+    echo "PostgreSQL is ready. Applying schemas..."
+
+    # Loop through the list of URLs
+    for SCHEMA_URL in $SCHEMA_URLS; do
+      SCHEMA_FILE="$(basename $SCHEMA_URL)"
+      
+      echo "Downloading schema from $SCHEMA_URL..."
+      curl -s -o "$SCHEMA_FILE" "$SCHEMA_URL"
+
+      echo "Applying schema: $SCHEMA_FILE"
+      PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$SCHEMA_FILE"
+    done
+
+    echo "All schemas applied successfully."

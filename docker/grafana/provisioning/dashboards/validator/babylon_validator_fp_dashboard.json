@@ -19,7 +19,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 11,
+  "id": 14,
   "links": [],
   "panels": [
     {
@@ -57,7 +57,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "fixedColor": "orange",
+            "mode": "fixed"
           },
           "mappings": [],
           "thresholds": {
@@ -215,6 +216,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "cvms_indexer_db"
       },
+      "description": "In Babylon, each finality provider have to send a tx each block",
       "fieldConfig": {
         "defaults": {},
         "overrides": []
@@ -256,7 +258,7 @@
         },
         "onclick": "// Event handling\n/*\n// 'data', 'variables', 'options', 'utils', and 'event' are passed as arguments\n\ntry {\n  const { type: eventType, data: eventData } = event;\n  const { timeZone, dayjs, locationService, getTemplateSrv } = utils;\n\n  switch (eventType) {\n    case 'click':\n      console.log('Click event:', eventData.points);\n      break;\n    case 'select':\n      console.log('Selection event:', eventData.range);\n      break;\n    case 'zoom':\n      console.log('Zoom event:', eventData);\n      break;\n    default:\n      console.log('Unhandled event type:', eventType, eventData);\n  }\n\n  console.log('Current time zone:', timeZone);\n  console.log('From time:', dayjs(variables.__from).format());\n  console.log('To time:', dayjs(variables.__to).format());\n\n  // Example of using locationService\n  // locationService.partial({ 'var-example': 'test' }, true);\n\n} catch (error) {\n  console.error('Error in onclick handler:', error);\n}\n*/\n  ",
         "resScale": 2,
-        "script": "// Extracting the SQL data\nlet series = data.series[0];  // Access the data series\nif (!series || series.length === 0 || series.fields[0].values.length === 0) {\n  // Query result has no records, so skip the chart rendering\n  return {\n      data: [],\n    layout: {\n      title: 'No Data Available',\n      height: 10, // Reduce panel height\n      margin: {\n        l: 20,  // Left margin\n        r: 20,  // Right margin\n        t: 40,  // Top margin\n        b: 40   // Bottom margin\n      }\n    }\n  };\n}\n\n// Start data processing\nlet height = series.fields[0];  // Block height\nlet voted = series.fields[1];   // Voted status (0 = Inactive, 1 = Missed, 2 = Voted, 3 = Proposed)\nlet moniker = series.fields[2]; // Moniker (Validator name)\nlet address = series.fields[3];\nlet btc_pk = series.fields[4];\n\nif (moniker.values[0].length > 90) {\n  // Shorten the moniker values before sorting and using them\n  let shortenedMonikers = moniker.values.map(m => shortenMoniker(m));\n  moniker.values = shortenedMonikers;\n}\n\n// Get unique monikers and heights from the dataset for rows and columns\nlet uniqueMonikers = [...new Set(moniker.values)].sort().reverse();  // Unique monikers for Y-axis\nlet uniqueHeights = [...new Set(height.values)].sort().reverse();    // Unique block heights for X-axis\n\n// Initialize the 2D array (zValues) for the heatmap, default to 0 (Inactive)\nlet zValues = Array(uniqueMonikers.length).fill(null).map(() => Array(uniqueHeights.length).fill(0));\nlet hoverText = Array(uniqueMonikers.length).fill(null).map(() => Array(uniqueHeights.length).fill(\"\"));\n\n// Populate zValues with voted data (0 = Inactive, 1 = Missed, 2 = Voted, 3 = Proposed)\nfor (let i = 0; i < height.values.length; i++) {\n  let rowIndex = uniqueMonikers.indexOf(moniker.values[i]);  // Find the correct row for the moniker\n  let colIndex = uniqueHeights.indexOf(height.values[i]);    // Find the correct column for the height\n  zValues[rowIndex][colIndex] = voted.values[i];  // Assign the voted status\n  let statusMeaning = getStatusMeaning(voted.values[i]);  // Get the status meaning\n  \n  let pk = btc_pk.values[i];\n  let addr = address.values[i];\n\n  hoverText[rowIndex][colIndex] = `x: ${height.values[i]}<br>y: ${moniker.values[i]}<br>z: ${statusMeaning}<br>btc_pk: ${pk}<br>address: ${addr}`;  // Custom hover info with status meaning    \n}\n\n// Define a continuous color scale for smoother transitions\nlet colorScale = [\n  [0, 'rgba(255, 0, 0, 0.5)'],\n  [0.33, 'rgba(0, 0, 0, 0.5)'],\n  [0.66, 'rgba(0, 0, 0, 0.5)'], \n  [1, 'rgba(0, 0, 0, 0.5)'],\n];\n\n\n// Return the heatmap configuration for Plotly\nreturn {\n  data: [{\n    z: zValues,               // 2D array of statuses (0, 1, 2, 3)\n    x: uniqueHeights,         // Block heights for X-axis\n    y: uniqueMonikers,        // Monikers for Y-axis\n    type: 'heatmap',          // Plotly heatmap type\n    colorscale: colorScale,   // Use only two colors for discrete values\n    showscale: false,         // Hide the color scale bar\n    zmin: 0,                  // Set the minimum value for z (status)\n    zmax: 3,                  // Set the maximum value for z (status)\n    xgap: 5,                  // Add gap between cells along the X-axis (adjust the value for bigger gaps)\n    ygap: 5,                   // Add gap between cells along the Y-axis (adjust the value for bigger gaps)    \n    text: hoverText,          // Set the hoverText for the heatmap\n    hoverinfo: 'text'         // Display the hoverText    \n  }],\n  layout: {\n    xaxis: {\n      type: 'category',\n      tickmode: 'linear',\n      showgrid: true,          // Ensure gridlines on X-axis\n      tickformat: '.0f',\n      tickangle: -45,          // Rotate labels for better readability\n    },\n    yaxis: {\n      tickmode: 'array',        // Use tickmode 'array' to manually set Y-axis labels\n      tickvals: uniqueMonikers, // Set tick values to all unique monikers\n      ticktext: uniqueMonikers, // Display all monikers as text on Y-axis\n      showgrid: true            // Ensure gridlines on Y-axis\n    },\n    margin: {\n      l: 200,  // Adjust margin for longer moniker names\n      t: 20,   // Reduce top margin\n      b: 120,  // Adjust bottom margin for X-axis labels\n    }\n  }\n};\n\n// Function to map the voted status to its corresponding meaning\nfunction getStatusMeaning(status) {\n  switch(status) {\n    case 0:\n      return 'Missed';\n    case 1:\n      return 'Voted';\n    default:\n      return 'Unknown';\n  }\n}\n\n// Function to shorten long moniker values\nfunction shortenMoniker(moniker, startLength = 6, endLength = 4) {\n  if (moniker.length > (startLength + endLength)) {\n    return `${moniker.substring(0, startLength)}...${moniker.substring(moniker.length - endLength)}`;\n  }\n  return moniker;  // If it's already short, return as-is\n}",
+        "script": "// Extracting the SQL data\nlet series = data.series[0];  // Access the data series\nif (!series || series.length === 0 || series.fields[0].values.length === 0) {\n  // Query result has no records, so skip the chart rendering\n  return {\n      data: [],\n    layout: {\n      title: 'No Data Available',\n      height: 10, // Reduce panel height\n      margin: {\n        l: 20,  // Left margin\n        r: 20,  // Right margin\n        t: 40,  // Top margin\n        b: 40   // Bottom margin\n      }\n    }\n  };\n}\n\n// Start data processing\nlet height = series.fields[0];  // Block height\nlet voted = series.fields[1];   // Voted status (0 = Inactive, 1 = Missed, 2 = Voted, 3 = Proposed)\nlet moniker = series.fields[2]; // Moniker (Validator name)\nlet address = series.fields[3];\nlet btc_pk = series.fields[4];\n\nif (moniker.values[0].length > 90) {\n  // Shorten the moniker values before sorting and using them\n  let shortenedMonikers = moniker.values.map(m => shortenMoniker(m));\n  moniker.values = shortenedMonikers;\n}\n\n// Get unique monikers and heights from the dataset for rows and columns\nlet uniqueMonikers = [...new Set(moniker.values)].sort().reverse();  // Unique monikers for Y-axis\nlet uniqueHeights = [...new Set(height.values)].sort().reverse();    // Unique block heights for X-axis\n\n// Initialize the 2D array (zValues) for the heatmap, default to 0 (Inactive)\nlet zValues = Array(uniqueMonikers.length).fill(null).map(() => Array(uniqueHeights.length).fill(0));\nlet hoverText = Array(uniqueMonikers.length).fill(null).map(() => Array(uniqueHeights.length).fill(\"\"));\n\n// Populate zValues with voted data (0 = Inactive, 1 = Missed, 2 = Voted, 3 = Proposed)\nfor (let i = 0; i < height.values.length; i++) {\n  let rowIndex = uniqueMonikers.indexOf(moniker.values[i]);  // Find the correct row for the moniker\n  let colIndex = uniqueHeights.indexOf(height.values[i]);    // Find the correct column for the height\n  zValues[rowIndex][colIndex] = voted.values[i];  // Assign the voted status\n  let statusMeaning = getStatusMeaning(voted.values[i]);  // Get the status meaning\n  \n  let pk = btc_pk.values[i];\n  let addr = address.values[i];\n\n  hoverText[rowIndex][colIndex] = `x: ${height.values[i]}<br>y: ${moniker.values[i]}<br>z: ${statusMeaning}<br>btc_pk: ${pk}<br>address: ${addr}`;  // Custom hover info with status meaning    \n}\n\n// Define a continuous color scale for smoother transitions\nlet colorScale = [\n  [0, 'rgba(255, 0, 0, 1)'],\n  [0.33, 'rgba(0, 0, 0, 1)'],\n  [0.66, 'rgba(0, 0, 0, 1)'], \n  [1, 'rgba(0, 0, 0, 1)'],\n];\n\n\n// Return the heatmap configuration for Plotly\nreturn {\n  data: [{\n    z: zValues,               // 2D array of statuses (0, 1, 2, 3)\n    x: uniqueHeights,         // Block heights for X-axis\n    y: uniqueMonikers,        // Monikers for Y-axis\n    type: 'heatmap',          // Plotly heatmap type\n    colorscale: colorScale,   // Use only two colors for discrete values\n    showscale: false,         // Hide the color scale bar\n    zmin: 0,                  // Set the minimum value for z (status)\n    zmax: 3,                  // Set the maximum value for z (status)\n    xgap: 5,                  // Add gap between cells along the X-axis (adjust the value for bigger gaps)\n    ygap: 5,                   // Add gap between cells along the Y-axis (adjust the value for bigger gaps)    \n    text: hoverText,          // Set the hoverText for the heatmap\n    hoverinfo: 'text'         // Display the hoverText    \n  }],\n  layout: {\n    xaxis: {\n      type: 'category',\n      tickmode: 'linear',\n      showgrid: true,          // Ensure gridlines on X-axis\n      tickformat: '.0f',\n      tickangle: -45,          // Rotate labels for better readability\n    },\n    yaxis: {\n      tickmode: 'array',        // Use tickmode 'array' to manually set Y-axis labels\n      tickvals: uniqueMonikers, // Set tick values to all unique monikers\n      ticktext: uniqueMonikers, // Display all monikers as text on Y-axis\n      showgrid: true            // Ensure gridlines on Y-axis\n    },\n    margin: {\n      l: 200,  // Adjust margin for longer moniker names\n      t: 20,   // Reduce top margin\n      b: 120,  // Adjust bottom margin for X-axis labels\n    }\n  }\n};\n\n// Function to map the voted status to its corresponding meaning\nfunction getStatusMeaning(status) {\n  switch(status) {\n    case 0:\n      return 'Missed';\n    case 1:\n      return 'Voted';\n    default:\n      return 'Unknown';\n  }\n}\n\n// Function to shorten long moniker values\nfunction shortenMoniker(moniker, startLength = 6, endLength = 4) {\n  if (moniker.length > (startLength + endLength)) {\n    return `${moniker.substring(0, startLength)}...${moniker.substring(moniker.length - endLength)}`;\n  }\n  return moniker;  // If it's already short, return as-is\n}",
         "syncTimeRange": false,
         "timeCol": ""
       },
@@ -369,6 +371,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "cvms_indexer_db"
       },
+      "description": "In CometBFT, each validator should vote at each block",
       "fieldConfig": {
         "defaults": {},
         "overrides": []
@@ -521,7 +524,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "cvms_indexer_db"
       },
-      "description": "Extension Vote means ABCI++(2.0) feature.",
+      "description": "In Babylon, each validator should bote BLS voting at each epoch+1 block",
       "fieldConfig": {
         "defaults": {},
         "overrides": []
@@ -563,7 +566,7 @@
         },
         "onclick": "",
         "resScale": 2,
-        "script": "// Extracting the SQL data\nlet series = data.series[0];  // Access the data series\nif (!series || series.length === 0 || series.fields[0].values.length === 0) {\n  // Query result has no records, so skip the chart rendering\n  return {\n      data: [],\n    layout: {\n      title: 'No Data Available',\n      height: 10, // Reduce panel height\n      margin: {\n        l: 20,  // Left margin\n        r: 20,  // Right margin\n        t: 40,  // Top margin\n        b: 40   // Bottom margin\n      }\n    }\n  };\n}\n\n// Start data processing\nlet height = series.fields[0];  // Block height\nlet voted = series.fields[1];   // Voted status (0 = Inactive, 1 = Missed, 2 = Voted, 3 = Proposed)\nlet moniker = series.fields[2]; // Moniker (Validator name)\nlet epoch = series.fields[3]; // Moniker (Validator name)\n\n// Get unique monikers and heights from the dataset for rows and columns\nlet uniqueMonikers = [...new Set(moniker.values)].sort().reverse();  // Unique monikers for Y-axis\nlet uniqueHeights = [...new Set(height.values)].sort().reverse();    // Unique block heights for X-axis\n\n// Initialize the 2D array (zValues) for the heatmap, default to 0 (Inactive)\nlet zValues = Array(uniqueMonikers.length).fill(null).map(() => Array(uniqueHeights.length).fill(0));\nlet hoverText = Array(uniqueMonikers.length).fill(null).map(() => Array(uniqueHeights.length).fill(\"\"));\n\n// Populate zValues with voted data (0 = Inactive, 1 = Missed, 2 = Voted, 3 = Proposed)\nfor (let i = 0; i < height.values.length; i++) {\n  let rowIndex = uniqueMonikers.indexOf(moniker.values[i]);  // Find the correct row for the moniker\n  let colIndex = uniqueHeights.indexOf(height.values[i]);    // Find the correct column for the height\n  zValues[rowIndex][colIndex] = voted.values[i];  // Assign the voted status\n  let statusMeaning = getStatusMeaning(voted.values[i]);  // Get the status meaning\n  let epoch_number = epoch.values[i];\n  hoverText[rowIndex][colIndex] = `x: ${height.values[i]}<br>y: ${moniker.values[i]}<br>z: ${statusMeaning}(epoch: ${epoch_number})`;  // Custom hover info with status meaning    \n}\n\n// Define a continuous color scale for smoother transitions\n// let colorScale = [\n//   [0, 'rgba(255, 0, 0, 0.5)'],    // Inactive = gray\n//   [0.33, 'rgba(0, 0, 0, 0.5)'],     // Missed = red\n//   [0.66, 'rgba(0, 0, 0, 0.5)'],       // Voted = black\n//   [1, 'rgba(0, 0, 0, 0.5)'],        // Nill = yellow\n// ];\n\n// Define a continuous color scale for smoother transitions\nlet colorScale = [\n  [0, 'rgba(128, 128, 128, 0.5)'],    // Inactive = gray\n  [0.33, 'rgba(255, 0, 0, 0.5)'],     // Missed = red\n  [0.66, 'rgba(0, 0, 0, 0.5)'],       // Voted = black\n  [1, 'rgba(255, 255, 0, 0.5)'],        // Nill = yellow\n];\n\n\n// Return the heatmap configuration for Plotly\nreturn {\n  data: [{\n    z: zValues,               // 2D array of statuses (0, 1, 2, 3)\n    x: uniqueHeights,         // Block heights for X-axis\n    y: uniqueMonikers,        // Monikers for Y-axis\n    type: 'heatmap',          // Plotly heatmap type\n    colorscale: colorScale,   // Use only two colors for discrete values\n    showscale: false,         // Hide the color scale bar\n    zmin: 0,                  // Set the minimum value for z (status)\n    zmax: 3,                  // Set the maximum value for z (status)\n    xgap: 5,                  // Add gap between cells along the X-axis (adjust the value for bigger gaps)\n    ygap: 5,                   // Add gap between cells along the Y-axis (adjust the value for bigger gaps)    \n    text: hoverText,          // Set the hoverText for the heatmap\n    hoverinfo: 'text'         // Display the hoverText    \n  }],\n  layout: {\n    xaxis: {\n      type: 'category',\n      tickmode: 'linear',\n      showgrid: true,          // Ensure gridlines on X-axis\n      tickformat: '.0f',\n      tickangle: -45,          // Rotate labels for better readability\n    },\n    yaxis: {\n      tickmode: 'array',        // Use tickmode 'array' to manually set Y-axis labels\n      tickvals: uniqueMonikers, // Set tick values to all unique monikers\n      ticktext: uniqueMonikers, // Display all monikers as text on Y-axis\n      showgrid: true            // Ensure gridlines on Y-axis\n    },\n    margin: {\n      l: 200,  // Adjust margin for longer moniker names\n      t: 20,   // Reduce top margin\n      b: 120,  // Adjust bottom margin for X-axis labels\n    }\n  }\n};\n\n// Function to map the ve status to its corresponding meaning\n// ref; https://github.com/cometbft/cometbft/blob/v0.38.x/proto/tendermint/types/validator.pb.go\nfunction getStatusMeaning(status) {\n  switch(status) {\n    case 1:\n      return 'Absent';\n    case 2:\n      return 'Commit';\n    case 3:\n      return 'Nil';\n    default:\n      return 'Unknown';\n  }\n}",
+        "script": "// Extracting the SQL data\nlet series = data.series[0];\nif (!series || series.length === 0 || series.fields[0].values.length === 0) {\n  return {\n    data: [],\n    layout: {\n      title: 'No Data Available',\n      height: 10,\n      margin: { l: 20, r: 20, t: 40, b: 40 }\n    }\n  };\n}\n\n// Map series fields\nlet height = series.fields[0];   // Still needed for hover\nlet voted = series.fields[1];\nlet moniker = series.fields[2];\nlet epoch = series.fields[3];    // New X-axis\n\n// Use epoch as the X-axis\nlet uniqueEpochs = [...new Set(epoch.values)].sort((a, b) => b - a);  // Sort descending\nlet uniqueMonikers = [...new Set(moniker.values)].sort().reverse();\n\n// Initialize z-values and hover text\nlet zValues = Array(uniqueMonikers.length).fill(null).map(() => Array(uniqueEpochs.length).fill(0));\nlet hoverText = Array(uniqueMonikers.length).fill(null).map(() => Array(uniqueEpochs.length).fill(\"\"));\n\n// Populate data\nfor (let i = 0; i < epoch.values.length; i++) {\n  let rowIndex = uniqueMonikers.indexOf(moniker.values[i]);\n  let colIndex = uniqueEpochs.indexOf(epoch.values[i]);\n  zValues[rowIndex][colIndex] = voted.values[i];\n  let statusMeaning = getStatusMeaning(voted.values[i]);\n  hoverText[rowIndex][colIndex] = `x: ${epoch.values[i]}<br>y: ${moniker.values[i]}<br>z: ${statusMeaning}(height: ${height.values[i]})`;\n}\n\n// Define color scale\nlet colorScale = [\n  [0, 'rgba(128, 128, 128, 0.5)'],  // Inactive\n  [0.33, 'rgba(255, 0, 0, 0.5)'],   // Missed\n  [0.66, 'rgba(0, 0, 0, 0.5)'],     // Voted\n  [1, 'rgba(255, 255, 0, 0.5)']     // Nil\n];\n\n// Plotly heatmap config\nreturn {\n  data: [{\n    z: zValues,\n    x: uniqueEpochs,  // Now using epochs for X-axis\n    y: uniqueMonikers,\n    type: 'heatmap',\n    colorscale: colorScale,\n    showscale: false,\n    zmin: 0,\n    zmax: 3,\n    xgap: 5,\n    ygap: 5,\n    text: hoverText,\n    hoverinfo: 'text'\n  }],\n  layout: {\n    xaxis: {\n      type: 'category',\n      tickmode: 'linear',\n      showgrid: true,\n      tickformat: '.0f',\n      tickangle: -45\n    },\n    yaxis: {\n      tickmode: 'array',\n      tickvals: uniqueMonikers,\n      ticktext: uniqueMonikers,\n      showgrid: true\n    },\n    margin: {\n      l: 200,\n      t: 20,\n      b: 120\n    }\n  }\n};\n\n// Helper to decode vote status\nfunction getStatusMeaning(status) {\n  switch(status) {\n    case 1: return 'Absent';\n    case 2: return 'Commit';\n    case 3: return 'Nil';\n    default: return 'Unknown';\n  }\n}",
         "syncTimeRange": false,
         "timeCol": ""
       },
@@ -577,7 +580,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH epoch AS (\n  SELECT MAX(epoch) as max_epoch FROM babylon_checkpoint_${table_chain_id}\n)\n select\n  idx.height,\n  idx.status,\n  vi.moniker AS moniker,\n  idx.epoch\nFROM\n  babylon_checkpoint_${table_chain_id} idx\nJOIN\n  meta.validator_info vi\n  ON idx.validator_hex_address_id = vi.id\nJOIN\n  epoch\n  ON idx.epoch BETWEEN (epoch.max_epoch - ${blocks}) AND epoch.max_epoch\nORDER by\n  idx.height DESC\n",
+          "rawSql": "SELECT\n  idx.height, \n  idx.status,\n  vi.moniker AS moniker,\n  idx.epoch\nFROM\n  babylon_checkpoint_${table_chain_id} idx\nJOIN\n  meta.validator_info vi\n  ON idx.validator_hex_address_id = vi.id\nWHERE\n  idx.epoch >= (\n    SELECT MAX(epoch) - (${epochs} - 1)\n    FROM babylon_checkpoint_${table_chain_id}\n  )\nORDER BY\n  idx.epoch desc",
           "refId": "A",
           "sql": {
             "columns": [
@@ -610,8 +613,8 @@
     "list": [
       {
         "current": {
-          "text": "bbn-test-5",
-          "value": "bbn-test-5"
+          "text": "bbn-1",
+          "value": "bbn-1"
         },
         "datasource": {
           "type": "prometheus",
@@ -633,8 +636,8 @@
       },
       {
         "current": {
-          "text": "bbn_test_5",
-          "value": "bbn_test_5"
+          "text": "bbn_1",
+          "value": "bbn_1"
         },
         "datasource": {
           "type": "prometheus",
@@ -642,6 +645,7 @@
         },
         "definition": "label_values(cvms_block_height{chain_id=\"$chain_id\"},table_chain_id)",
         "hide": 2,
+        "includeAll": false,
         "name": "table_chain_id",
         "options": [],
         "query": {
@@ -661,6 +665,23 @@
         "description": "the number of blocks to monitor your operators(fp & validator)",
         "label": "monitoring blocks",
         "name": "blocks",
+        "options": [
+          {
+            "selected": true,
+            "text": "10",
+            "value": "10"
+          }
+        ],
+        "query": "10",
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "text": "10",
+          "value": "10"
+        },
+        "label": "monitor epochs",
+        "name": "epochs",
         "options": [
           {
             "selected": true,

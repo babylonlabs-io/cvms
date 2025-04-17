@@ -1,0 +1,56 @@
+{{- if .Values.indexer.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "cvms.fullname" . }}-indexer
+  namespace: {{ default .Release.Namespace .Values.indexer.serviceMonitor.namespace | quote }}
+  labels:
+    {{- include "cvms.labels" . | nindent 4 }}
+    {{- include "cvms.indexerSelectorMetricLabels" . | nindent 4 }}
+    {{- with .Values.indexer.metrics.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.indexer.serviceMonitor.selector }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.indexer.serviceMonitor.additionalLabels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.indexer.serviceMonitor.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  endpoints:
+    - port: {{ .Values.indexer.metrics.portName }}
+      {{- with .Values.indexer.serviceMonitor.interval }}
+      interval: {{ . }}
+      {{- end }}
+      {{- with .Values.indexer.serviceMonitor.scrapeTimeout }}
+      scrapeTimeout: {{ . }}
+      {{- end }}
+      {{- with .Values.indexer.serviceMonitor.path }}
+      path: {{ . }}
+      {{- end }}
+      {{- with .Values.indexer.serviceMonitor.relabelings }}
+      relabelings:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.indexer.serviceMonitor.metricRelabelings }}
+      metricRelabelings:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.indexer.serviceMonitor.scheme }}
+      scheme: {{ . }}
+      {{- end }}
+      {{- with .Values.indexer.serviceMonitor.tlsConfig }}
+      tlsConfig:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  namespaceSelector:
+    matchNames:
+      - {{ default .Release.Namespace .Values.namespaceOverride | quote }}
+  selector:
+    matchLabels:
+      {{- include "cvms.indexerSelectorMetricLabels" . | nindent 6 }}
+{{- end }}

@@ -1,0 +1,12 @@
+---
+mintstation-1:
+  protocol_type: cosmos
+  support_asset:
+    denom: umint
+    decimal: 6
+  packages:
+    - block
+    - upgrade
+    - uptime
+    - voteindexer #for cometbft consensus vote
+    - veindexer # for vote-extension

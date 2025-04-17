@@ -6,12 +6,12 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/cosmostation/cvms/internal/common"
+	commonapi "github.com/cosmostation/cvms/internal/common/api"
+	indexertypes "github.com/cosmostation/cvms/internal/common/indexer/types"
 	"github.com/cosmostation/cvms/internal/helper"
 	"github.com/cosmostation/cvms/internal/helper/db"
 	"github.com/cosmostation/cvms/internal/helper/healthcheck"
-
-	"github.com/cosmostation/cvms/internal/common"
-	indexertypes "github.com/cosmostation/cvms/internal/common/indexer/types"
 	"github.com/cosmostation/cvms/internal/packages/babylon/finality-provider/repository"
 )
 
@@ -66,6 +66,25 @@ func (idx *FinalityProviderIndexer) Start() error {
 
 	// go fetch new height in loop, it must be after init metrics
 	go idx.FetchLatestHeight()
+
+	// set activation height
+	_, _, activationHeight, err := commonapi.GetBabylonFinalityProviderParams(idx.CommonClient)
+	if err != nil {
+		return errors.Wrap(err, "failed to get babylon finality provider params to check activation height")
+	}
+
+	if activationHeight > idx.Lh.LatestHeight || activationHeight > initIndexPointer.Pointer {
+		idx.Infof("activation height is %d, so that this package will sleep until the activation height", activationHeight)
+		err := idx.repo.UpdateIndexPointer(repository.IndexName, idx.ChainID, activationHeight)
+		if err != nil {
+			return errors.Wrap(err, "failed to update index pointer")
+		}
+
+		idx.Infof("set activation height %d in the database", activationHeight)
+		initIndexPointer.Pointer = activationHeight
+		idx.Infof("updated index pointer: %d", initIndexPointer.Pointer)
+	}
+
 	// loop
 	go idx.Loop(initIndexPointer.Pointer)
 	// loop partion table time retention by env parameter

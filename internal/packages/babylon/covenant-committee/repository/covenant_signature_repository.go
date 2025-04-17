@@ -29,39 +29,35 @@ func NewCovenantSigRepository(indexerDB common.IndexerDB, sqlTimeout time.Durati
 	return CovenantSignatureRepository{sqlTimeout, indexerDB.DB, metarepo}
 }
 
-func (repo *CovenantSignatureRepository) InsertBabylonCovenantSignatureList(chainInfoID int64, indexPointerHeight int64, bcsList []model.BabylonCovenantSignature) error {
+func (repo *CovenantSignatureRepository) InsertBabylonCovenantSignatureList(chainInfoID int64, indexPointerHeight int64, bcsList []model.BabylonCovenantSignature, bbdList []model.BabylonBtcDelegation) error {
 	ctx, cancel := context.WithTimeout(context.Background(), repo.sqlTimeout)
 	defer cancel()
-
-	// if there are not any covenant signature in this block, just update index pointer
-	if len(bcsList) == 0 {
-		_, err := repo.
-			NewUpdate().
-			Model(&idxmodel.IndexPointer{}).
-			Set("pointer = ?", indexPointerHeight).
-			Where("chain_info_id = ?", chainInfoID).
-			Where("index_name = ?", IndexName).
-			Exec(ctx)
-		if err != nil {
-			return errors.Wrapf(err, "failed to update new index pointer")
-		}
-
-		return nil
-	}
 
 	err := repo.RunInTx(
 		ctx,
 		nil,
 		func(ctx context.Context, tx bun.Tx) error {
-			_, err := tx.NewInsert().
-				Model(&bcsList).
-				ExcludeColumn("id").
-				Exec(ctx)
-			if err != nil {
-				return errors.Wrapf(err, "failed to insert covenant signature")
+			if len(bbdList) > 0 {
+				_, err := repo.NewInsert().
+					Model(&bbdList).
+					ExcludeColumn("id").
+					Exec(ctx)
+				if err != nil {
+					return errors.Wrapf(err, "failed to insert btc delegation: %v", bbdList)
+				}
 			}
 
-			_, err = tx.
+			if len(bcsList) > 0 {
+				_, err := tx.NewInsert().
+					Model(&bcsList).
+					ExcludeColumn("id").
+					Exec(ctx)
+				if err != nil {
+					return errors.Wrapf(err, "failed to insert covenant signature")
+				}
+			}
+
+			_, err := tx.
 				NewUpdate().
 				Model(&idxmodel.IndexPointer{}).
 				Set("pointer = ?", indexPointerHeight).

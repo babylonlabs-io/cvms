@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	syncStartHeight int64 = 455240
+	syncStartHeight int64 = 695000
 
 	p = common.Packager{
 		ChainName:    "babylon",
