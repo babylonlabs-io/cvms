@@ -24,7 +24,8 @@ groups:
   - name: AxelarValdHeartbeatsPackage
     rules:
       - alert: AxelarValdHeartbeatsStopped
-        expr: group by (chain_id, broadcastor_address, moniker, validator_operator_address, mainnet) (increase(cvms_axelar_vald_heartbeats_count_total{status="missed"}[15m])) > 2
+        expr: increase(cvms_axelar_vald_heartbeats_count_total{status="success"}[5m]) == 0
+        for: 10m
         labels:
           severity: warning
         annotations:
