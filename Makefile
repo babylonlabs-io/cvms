@@ -231,3 +231,21 @@ test-pkg-all:
 
 	@echo "End Testing"
 	@echo 	
+
+###############################################################################
+###                             golangci-lint                               ###
+###############################################################################	
+
+.PHONY: lint
+
+ci: 
+	@echo "Running golangci-lint for all linters"
+	@golangci-lint run
+
+lint:
+	@echo "Running golangci-lint for linter: $(filter-out $@,$(MAKECMDGOALS))"
+	@golangci-lint run --output.text.path stdout --enable-only $(filter-out $@,$(MAKECMDGOALS))
+
+# Prevent Make from treating arguments as file targets
+%:
+	@:

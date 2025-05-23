@@ -12,7 +12,6 @@ const (
 )
 
 func (vidx *VoteIndexer) initLabelsAndMetrics() {
-
 	recentMissCounterMetric := vidx.Factory.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace:   common.Namespace,
 		Subsystem:   subsystem,

@@ -20,12 +20,10 @@ func ParseCurrentEpoch(resp []byte) (int64, int64, error) {
 	currentEpoch, err := strconv.ParseInt(currentEpochResponse.CurrentEpoch, 10, 64)
 	if err != nil {
 		return 0, 0, err
-
 	}
 	epochBoundaryHeight, err := strconv.ParseInt(currentEpochResponse.EpochBoundary, 10, 64)
 	if err != nil {
 		return 0, 0, err
-
 	}
 
 	return currentEpoch, epochBoundaryHeight, nil
@@ -48,12 +46,10 @@ func ParseEpoch(resp []byte) (
 	firstBlockHeight, err := strconv.ParseInt(result.Epoch.FirstBlockHeight, 10, 64)
 	if err != nil {
 		return 0, 0, err
-
 	}
 	currentEpochInterval, err := strconv.ParseInt(result.Epoch.CurrentEpochInterval, 10, 64)
 	if err != nil {
 		return 0, 0, err
-
 	}
 
 	return firstBlockHeight, currentEpochInterval, nil

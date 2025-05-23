@@ -296,7 +296,6 @@ func GetBlockResults(c common.CommonClient, height int64) (
 	/* consensus param */ types.CosmosBlockData,
 	/* unexpected error */ error,
 ) {
-
 	// init context
 	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
 	defer cancel()
@@ -310,7 +309,6 @@ func GetBlockResults(c common.CommonClient, height int64) (
 	}
 	if resp.StatusCode() != http.StatusOK {
 		return nil, nil, types.CosmosBlockData{}, errors.Errorf("stanage status code from %s: [%d]", resp.Request.URL, resp.StatusCode())
-
 	}
 
 	txsEvents, blockEvents, blockData, err := parser.CosmosBlockResultsParser(resp.Body())

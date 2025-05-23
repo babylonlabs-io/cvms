@@ -158,7 +158,6 @@ func (idx *BDAIndexer) batchSync(lastIndexPoint int64) (
 		messageTypeList, err := idx.GetMessageTypeListByChainInfoID(idx.ChainInfoID)
 		if err != nil {
 			return lastIndexPoint, errors.Wrap(err, "failed to reload message type list")
-
 		}
 
 		for _, msgType := range messageTypeList {

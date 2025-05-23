@@ -42,7 +42,6 @@ func NewVEIndexer(p common.Packager) (*VEIndexer, error) {
 
 func (veidx *VEIndexer) Start() error {
 	if ok := helper.Contains(supportedProtocolTypes, veidx.ProtocolType); ok {
-
 		err := veidx.InitChainInfoID()
 		if err != nil {
 			return errors.Wrap(err, "failed to init chain_info_id")

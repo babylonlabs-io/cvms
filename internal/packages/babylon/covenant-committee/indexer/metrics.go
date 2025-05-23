@@ -55,7 +55,6 @@ func (idx *CovenantSignatureIndexer) updateRootMetrics(indexPointer int64, index
 	common.IndexPointer.With(idx.RootLabels).Set(float64(indexPointer))
 	common.IndexPointerTimestamp.With(idx.RootLabels).Set((float64(indexPointerTimestamp.Unix())))
 	idx.Debugf("update prometheus metrics %d epoch", indexPointer)
-
 }
 
 func (idx *CovenantSignatureIndexer) updateIndexerMetrics(

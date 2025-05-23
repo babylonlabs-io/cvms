@@ -29,7 +29,6 @@ func selectPackage(
 	isConsumer bool,
 	cc config.ChainConfig, monikers []string,
 ) error {
-
 	// Add validation logic on each provided URL
 	validAPIs := make([]string, 0)
 	validRPCs := make([]string, 0)

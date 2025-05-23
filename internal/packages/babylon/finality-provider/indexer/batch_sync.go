@@ -154,7 +154,6 @@ func (idx *FinalityProviderIndexer) batchSync(lastIndexPointerHeight int64) (
 		fpInfoList, err := idx.repo.GetFinalityProviderInfoListByChainInfoID(idx.ChainInfoID)
 		if err != nil {
 			return lastIndexPointerHeight, errors.Wrap(err, "failed to get new validator info list after inserting new hex address list")
-
 		}
 
 		for _, fp := range fpInfoList {

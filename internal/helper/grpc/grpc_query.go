@@ -42,7 +42,6 @@ func GrpcInvokeQuery(
 	stub *grpcdynamic.Stub,
 	queryData string,
 ) (string, error) {
-
 	msg, err := CreateMessage(methodDescriptor, &jsonPbUnmarshaler, queryData)
 	if err != nil {
 		// client.Logger.Errorf("grpc api failed to create proto message: %v", err)

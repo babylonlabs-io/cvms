@@ -28,3 +28,6 @@ custom_chains.yaml
 # IDEA editor
 .idea
 **/.idea
+
+# dev
+lint-output.txt

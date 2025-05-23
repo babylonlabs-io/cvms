@@ -29,8 +29,8 @@ func GetBlockStatus(
 		requester = c.APIClient.R().SetContext(ctx)
 	}
 
-	var resp = &resty.Response{}
 	var err error
+	var resp *resty.Response
 
 	if CommonBlockCallMethod == common.GET {
 		resp, err = requester.

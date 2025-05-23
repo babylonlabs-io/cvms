@@ -31,7 +31,6 @@ func CosmosBlockParser(resp []byte) (float64, float64, error) {
 		}
 
 		return blockHeight, float64(timestamp), nil
-
 	} else { // tendermint v0.37.x
 		var resultV37 types.CosmosV37BlockResponse
 		if err := json.Unmarshal(resp, &resultV37); err != nil {

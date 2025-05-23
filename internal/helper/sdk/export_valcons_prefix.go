@@ -15,7 +15,6 @@ func ExportBech32ValconsPrefix(bech32ValoperPrefix string) (string, error) {
 		chainPrefix := strings.Split(split[0], "valoper")
 		prefix := chainPrefix[0] + "valcons"
 		return prefix, nil
-
 	} else {
 		switch split[0] {
 		case "iva":

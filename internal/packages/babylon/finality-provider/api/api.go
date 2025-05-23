@@ -129,7 +129,6 @@ func getLastFinalizedBlockInfo(votes []string, fps []commontypes.FinalityProvide
 		// check if fp is in votes
 		exist := finalizedVoteMap[fp.BtcPkHex]
 		if exist {
-
 			finalizedVP += vp
 		} else {
 			missingVP += vp

@@ -166,7 +166,6 @@ func (idx *AxelarAmplifierVerifierIndexer) batchSync(lastIndexPoint int64) (
 		verifierInfoList, err := idx.GetVerifierInfoListByChainInfoID(idx.ChainInfoID)
 		if err != nil {
 			return lastIndexPoint, errors.Wrap(err, "failed to get new reporter info list after inserting new hex address list")
-
 		}
 
 		for _, v := range verifierInfoList {
@@ -224,7 +223,6 @@ func (idx *AxelarAmplifierVerifierIndexer) batchSync(lastIndexPoint int64) (
 				Status:         model.StringToPollVote(pv.StatusStr),
 				PollVoteHeight: h,
 			})
-
 		}
 		idx.Debugf("%d poll votes will be updated in %d height", len(summary[h].pollVotes), h)
 	}
