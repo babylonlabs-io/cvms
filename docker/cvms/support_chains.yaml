@@ -1391,11 +1391,12 @@ teritori-1:
     - voteindexer
 test6:
   chain_name: test6
-  protocol_type: cosmos
+  protocol_type: gnoland
   mainnet: false
   support_asset:
   packages:
     - block
+    - gnoland-voteindexer
 test-core-2:
   chain_name: persistence
   protocol_type: cosmos

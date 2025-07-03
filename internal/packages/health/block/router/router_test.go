@@ -48,7 +48,7 @@ func TestRequestBlockTimeStamp(t *testing.T) {
 		},
 		{
 			testingName: "Gnoland Block Package Testing",
-			chainType:   "cosmos",
+			chainType:   "gnoland",
 			hostAddress: os.Getenv("TEST_BLOCK_GNOLAND_HOST_ADDRESS"),
 		},
 	}
