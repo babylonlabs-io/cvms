@@ -826,7 +826,7 @@ lum-network-1:
     - upgrade
     - uptime
     - voteindexer
-lumera-testnet-1:
+lumera-testnet-2:
   chain_name: lumera
   protocol_type: cosmos
   mainnet: false
@@ -1291,7 +1291,7 @@ ssc-1:
     - upgrade
     - uptime
     - voteindexer
-ssc-testnet-2:
+ssc-testnet-3:
   chain_name: saga
   protocol_type: cosmos
   mainnet: false
