@@ -1552,3 +1552,10 @@ zig-test-2:
     - upgrade
     - uptime
     - voteindexer
+0gchain-16601:
+  chain_name: zero-gravity
+  protocol_type: cosmos
+  mainnet: false
+  support_asset:
+  packages:
+    - block
