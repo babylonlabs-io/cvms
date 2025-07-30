@@ -221,7 +221,7 @@ func GetEventNonceStatusByGRPC(
 		go func(ch chan helper.Result) {
 			defer wg.Done()
 			if orchestratorAddress == "" {
-				c.Warnf("skipped empty orchestrator address for %s", validatorOperatorAddress)
+				// c.Warnf("skipped empty orchestrator address for %s", validatorOperatorAddress)
 				ch <- helper.Result{
 					Success: true,
 					Item: types.ValidatorStatus{
