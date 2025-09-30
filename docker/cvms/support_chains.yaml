@@ -139,6 +139,8 @@ axelar-dojo-1:
     - axelar-evm
     - voteindexer
     - axelar-amplifier-verifier
+    - axelar-vald-heartbeats
+    - block-data-analytics
 axelar-testnet-lisbon-3:
   chain_name: axelar
   protocol_type: cosmos
@@ -153,6 +155,8 @@ axelar-testnet-lisbon-3:
     - axelar-evm
     - voteindexer
     - axelar-amplifier-verifier
+    - axelar-vald-heartbeats
+    - block-data-analytics
 band-laozi-testnet6:
   chain_name: band
   protocol_type: cosmos
@@ -216,7 +220,7 @@ bbn-1:
     - babylon-covenant-committee
     - babylon-finality-provider-indexer
     - babylon-finality-provider-uptime
-    - babylon-btc-delegations        
+    - babylon-btc-delegations
 bitcanna-1:
   chain_name: bitcanna
   protocol_type: cosmos
@@ -591,6 +595,30 @@ humans_1089-1:
     - upgrade
     - uptime
     - voteindexer
+hippo-protocol-1:
+  chain_name: hippocrat
+  protocol_type: cosmos
+  mainnet: true
+  support_asset:
+    denom: ahp
+    decimal: 18
+  packages:
+    - block
+    - upgrade
+    - uptime
+    - voteindexer
+hippo-protocol-testnet-1:
+  chain_name: hippocrat
+  protocol_type: cosmos
+  mainnet: false
+  support_asset:
+    denom: ahp
+    decimal: 18
+  packages:
+    - block
+    - upgrade
+    - uptime
+    - voteindexer
 iliad-0:
   chain_name: story
   protocol_type: cosmos
@@ -618,6 +646,19 @@ initiation-2:
   chain_name: initia
   protocol_type: cosmos
   mainnet: false
+  support_asset:
+    denom: uinit
+    decimal: 6
+  packages:
+    - block
+    - upgrade
+    - uptime
+    - voteindexer
+    - veindexer
+interwoven-1:
+  chain_name: initia
+  protocol_type: cosmos
+  mainnet: true
   support_asset:
     denom: uinit
     decimal: 6
@@ -785,7 +826,7 @@ lum-network-1:
     - upgrade
     - uptime
     - voteindexer
-lumera-testnet-1:
+lumera-testnet-2:
   chain_name: lumera
   protocol_type: cosmos
   mainnet: false
@@ -900,7 +941,7 @@ neutron-1:
   chain_name: neutron
   protocol_type: cosmos
   mainnet: true
-  consumer: true
+  consumer: false
   support_asset:
     denom: untrn
     decimal: 6
@@ -1079,6 +1120,18 @@ phoenix-1:
     - upgrade
     - uptime
     - voteindexer
+columbus-5:
+  chain_name: terra-classic
+  protocol_type: cosmos
+  mainnet: true
+  support_asset:
+    denom: uluna
+    decimal: 6
+  packages:
+    - block
+    - upgrade
+    - uptime
+    - voteindexer
 pio-mainnet-1:
   chain_name: provenance
   protocol_type: cosmos
@@ -1238,7 +1291,7 @@ ssc-1:
     - upgrade
     - uptime
     - voteindexer
-ssc-testnet-2:
+ssc-testnet-3:
   chain_name: saga
   protocol_type: cosmos
   mainnet: false
@@ -1287,7 +1340,20 @@ stride-1:
     - upgrade
     - uptime
     - voteindexer
-imuachaintestnet_233-8:
+sahara-test-1:
+  chain_name: saharaai
+  protocol_type: cosmos
+  mainnet: false
+  support_asset:
+    denom: usah
+    decimal: 18
+  packages:
+    - block
+    - upgrade
+    - uptime
+    - voteindexer
+    - block-data-analytics
+imuachaintestnet_233-9:
   chain_name: imua
   protocol_type: cosmos
   mainnet: false
@@ -1335,6 +1401,14 @@ teritori-1:
     - upgrade
     - uptime
     - voteindexer
+test6:
+  chain_name: gnoland
+  protocol_type: gnoland
+  mainnet: false
+  support_asset:
+  packages:
+    - block
+    - gnoland-voteindexer
 test-core-2:
   chain_name: persistence
   protocol_type: cosmos
@@ -1382,7 +1456,6 @@ union-testnet-8:
   packages:
     - block
     - upgrade
-    - uptime
     - voteindexer
 union-testnet-9:
   chain_name: union
@@ -1394,7 +1467,6 @@ union-testnet-9:
   packages:
     - block
     - upgrade
-    - uptime
     - voteindexer
 union-1:
   chain_name: union
@@ -1444,6 +1516,18 @@ xrplevm_1449000-1:
     - upgrade
     - uptime
     - voteindexer
+xrplevm_1440000-1:
+  chain_name: xrpl-evm
+  protocol_type: cosmos
+  mainnet: true
+  support_asset:
+    denom: axrp
+    decimal: 18
+  packages:
+    - block
+    - upgrade
+    - uptime
+    - voteindexer
 zetachain_7000-1:
   chain_name: zeta
   protocol_type: cosmos
@@ -1456,3 +1540,22 @@ zetachain_7000-1:
     - upgrade
     - uptime
     - voteindexer
+zig-test-2:
+  chain_name: zigchain
+  protocol_type: cosmos
+  mainnet: false
+  support_asset:
+    denom: uzig
+    decimal: 6
+  packages:
+    - block
+    - upgrade
+    - uptime
+    - voteindexer
+0gchain-16601:
+  chain_name: zero-gravity
+  protocol_type: cosmos
+  mainnet: false
+  support_asset:
+  packages:
+    - block

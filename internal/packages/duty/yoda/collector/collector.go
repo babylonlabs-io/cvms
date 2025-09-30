@@ -202,7 +202,6 @@ func loop(c *common.Exporter, p common.Packager) {
 						common.MonikerLabel:          req.Validator.Moniker,
 					}).Observe(float64(req.Request.BlocksPassed))
 			}
-
 		} else {
 			// filter metrics for only specific validator
 			for _, item := range status.Validators {

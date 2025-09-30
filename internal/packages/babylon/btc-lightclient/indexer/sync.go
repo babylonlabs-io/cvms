@@ -143,7 +143,6 @@ func (idx *BTCLightClientIndexer) batchSync(lastIndexPoint int64) (
 		repoterInfoList, err := idx.GetVigilanteInfoListByChainInfoID(idx.ChainInfoID)
 		if err != nil {
 			return lastIndexPoint, errors.Wrap(err, "failed to get new reporter info list after inserting new hex address list")
-
 		}
 
 		for _, reporter := range repoterInfoList {

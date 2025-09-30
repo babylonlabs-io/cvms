@@ -6,7 +6,6 @@ import (
 
 	"github.com/cosmostation/cvms/internal/common"
 	"github.com/cosmostation/cvms/internal/helper/healthcheck"
-	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -26,9 +25,6 @@ const (
 )
 
 func Start(p common.Packager) error {
-	if p.ChainName != "babylon" {
-		return errors.New("unexpected chain for this package")
-	}
 	exporter := common.NewExporter(p)
 	for _, rpc := range p.RPCs {
 		exporter.SetRPCEndPoint(rpc)

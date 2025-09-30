@@ -2,8 +2,10 @@ package api
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -15,17 +17,11 @@ import (
 	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
 	"github.com/jhump/protoreflect/grpcreflect"
 	"google.golang.org/grpc"
-
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	reflectpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 )
-
-// NOTE: debug
-// func init() {
-// 	logger := grpclog.NewLoggerV2(os.Stdout, os.Stdout, os.Stderr)
-// 	grpclog.SetLoggerV2(logger)
-// }
 
 func GetEventNonceStatusByGRPC(
 	c *common.Exporter,
@@ -36,10 +32,21 @@ func GetEventNonceStatusByGRPC(
 	ctx, cancel := context.WithTimeout(context.Background(), common.Timeout)
 	defer cancel()
 
-	// NOTE: currently it don't support nginx grpc proxy ssl server like grpc.cosmostation.io:443
+	creds := insecure.NewCredentials()
+
+	// check the port is 443 or not
+	if strings.Contains(c.GetGRPCEndPoint(), ":443") {
+		tlsConf := &tls.Config{
+			NextProtos: []string{"h2"}, // only allow HTTP/2
+			MinVersion: tls.VersionTLS12,
+		}
+
+		creds = credentials.NewTLS(tlsConf)
+	}
+
 	// create grpc connection
 	grpcConnection, err := grpc.NewClient(c.GetGRPCEndPoint(),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithTransportCredentials(creds),
 	)
 	if err != nil {
 		c.Errorf("grpc request error: %s", err.Error())
@@ -115,7 +122,20 @@ func GetEventNonceStatusByGRPC(
 			)
 
 			if err != nil {
-				c.Errorf("grpc error: %s", err)
+				// NOTE: we need to modify this logic in the future for general cases
+
+				// case.1 : not registered validators for gravity-bridge
+				if strings.Contains(err.Error(), "codespace gravity code 3: invalid: No validator") {
+					c.Infof("got empty orchestrator address for %s, so saved empty string", validatorOperatorAddress)
+					ch <- helper.Result{Success: true, Item: types.ValidatorStatus{
+						ValidatorOperatorAddress: validatorOperatorAddress,
+						OrchestratorAddress:      "",
+						Moniker:                  validatorMoniker,
+					}}
+					return
+				}
+
+				c.Errorf("grpc error: %s for %s", err, commonOrchestratorPayload)
 				ch <- helper.Result{Success: false, Item: nil}
 				return
 			}
@@ -129,7 +149,7 @@ func GetEventNonceStatusByGRPC(
 
 			if orchestratorAddress == "" {
 				// not registered validators
-				c.Warnf("got empty orchestrator address for %s, so saved empty string", validatorOperatorAddress)
+				c.Infof("got empty orchestrator address for %s, so saved empty string", validatorOperatorAddress)
 				ch <- helper.Result{Success: true, Item: types.ValidatorStatus{
 					ValidatorOperatorAddress: validatorOperatorAddress,
 					OrchestratorAddress:      "",
@@ -201,7 +221,7 @@ func GetEventNonceStatusByGRPC(
 		go func(ch chan helper.Result) {
 			defer wg.Done()
 			if orchestratorAddress == "" {
-				c.Warnf("skipped empty orchestrator address for %s", validatorOperatorAddress)
+				// c.Warnf("skipped empty orchestrator address for %s", validatorOperatorAddress)
 				ch <- helper.Result{
 					Success: true,
 					Item: types.ValidatorStatus{

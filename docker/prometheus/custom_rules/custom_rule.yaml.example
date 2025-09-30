@@ -1,0 +1,10 @@
+groups:
+  - name: BalancePackage
+    rules:
+      - alert: SomeValidatorBalanceUnder1
+        expr: cvms_balance_remaining_amount{balance_address='cosmos1clpqr4nrk4khgkxj78fcwwh6dl3uw4ep4tgu9q'} < 1
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: 'The Cosmostation Validator ({{ $labels.balance_address }}) has less than 1 tokens remaining. Current balance: {{ $value }}'

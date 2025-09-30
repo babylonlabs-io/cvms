@@ -150,7 +150,6 @@ func (idx *CheckpointIndexer) batchSync(lastIndexPointerEpoch int64) (
 				validatorInfoList, err := idx.repo.GetValidatorInfoListByChainInfoID(idx.ChainInfoID)
 				if err != nil {
 					return lastIndexPointerEpoch, errors.Wrap(err, "failed to get new validator info list after inserting new hex address list")
-
 				}
 
 				for _, validator := range validatorInfoList {
@@ -159,7 +158,6 @@ func (idx *CheckpointIndexer) batchSync(lastIndexPointerEpoch int64) (
 
 				idx.Debugf("changed vim length: %d", len(idx.Vim))
 			}
-
 		}
 
 		// get epoch data

@@ -13,6 +13,9 @@ import (
 	btcdelegations "github.com/cosmostation/cvms/internal/packages/babylon/btc-delegations"
 	fpcollector "github.com/cosmostation/cvms/internal/packages/babylon/finality-provider/collector"
 
+	// axelar
+	axelarvaldheartbeats "github.com/cosmostation/cvms/internal/packages/axelar/vald/heartbeats/collector"
+
 	// validator consensus packages
 	uptime "github.com/cosmostation/cvms/internal/packages/consensus/uptime/collector"
 
@@ -115,12 +118,19 @@ func selectPackage(
 		}
 		return yoda.Start(*p)
 	case pkg == "axelar-evm":
-		endpoints := common.Endpoints{APIs: validAPIs, CheckAPI: true}
+		endpoints := common.Endpoints{RPCs: validRPCs, CheckRPC: true, APIs: validAPIs, CheckAPI: true}
 		p, err := common.NewPackager(m, f, l, mainnet, chainID, chainName, pkg, protocolType, cc, endpoints, monikers...)
 		if err != nil {
 			return errors.Wrap(err, common.ErrFailedToBuildPackager)
 		}
 		return axelarevm.Start(*p)
+	case pkg == "axelar-vald-heartbeats":
+		endpoints := common.Endpoints{RPCs: validRPCs, CheckRPC: true, APIs: validAPIs, CheckAPI: true}
+		p, err := common.NewPackager(m, f, l, mainnet, chainID, chainName, pkg, protocolType, cc, endpoints, monikers...)
+		if err != nil {
+			return errors.Wrap(err, common.ErrFailedToBuildPackager)
+		}
+		return axelarvaldheartbeats.Start(*p)
 	case pkg == "uptime":
 		endpoints := common.Endpoints{
 			RPCs: validRPCs, CheckRPC: true,

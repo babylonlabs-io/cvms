@@ -30,12 +30,16 @@ const (
 
 func Start(p common.Packager) error {
 	if ok := helper.Contains(types.SupportedChains, p.ChainName); ok {
-		for _, api := range p.APIs {
-			exporter := common.NewExporter(p)
-			exporter.SetAPIEndPoint(api)
-			go loop(exporter, p)
+		exporter := common.NewExporter(p)
+		for _, rpc := range p.RPCs {
+			exporter.SetRPCEndPoint(rpc)
 			break
 		}
+		for _, api := range p.APIs {
+			exporter.SetAPIEndPoint(api)
+			break
+		}
+		go loop(exporter, p)
 		return nil
 	}
 	return errors.Errorf("unsupported chain type: %s", p.ProtocolType)
@@ -89,7 +93,7 @@ func loop(c *common.Exporter, p common.Packager) {
 			common.Ops.With(rootLabels).Inc()
 			isUnhealth = true
 
-			c.Logger.Errorf("failed to update metrics: %s", err.Error())
+			c.Logger.Errorf("failed to update status metrics: %s", err.Error())
 			time.Sleep(SubsystemSleep)
 
 			continue

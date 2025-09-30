@@ -17,6 +17,7 @@ type InitiaStakingValidator struct {
 		Moniker string `json:"moniker"`
 	} `json:"description"`
 	Tokens interface{} `json:"-"`
+	Status string      `json:"status"`
 }
 
 // ref; https://github.com/initia-labs/initia/blob/main/proto/initia/mstaking/v1/query.proto#L14

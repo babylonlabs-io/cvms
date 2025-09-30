@@ -11,7 +11,6 @@ UNUSED
 **/.DS_Store
 
 # test envs
-.env.test
 tests/test.go
 
 # prod envs
@@ -19,10 +18,16 @@ tests/test.go
 config.yaml
 docker-compose.override.yaml
 custom-prometheus.yaml
-**/custom_rules/
+
+**/custom_rules/*.yaml
+**/custom_rules/*.yml
+
 custom-alertmanager.yaml
 custom_chains.yaml
 
 # IDEA editor
 .idea
 **/.idea
+
+# dev
+lint-output.txt

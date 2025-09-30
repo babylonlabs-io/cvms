@@ -291,11 +291,11 @@ func CosmosConsensusmParamsParser(resp []byte) (float64, float64, error) {
 	if err := json.Unmarshal(resp, &result); err != nil {
 		return 0, 0, err
 	}
-	maxBytes, err := strconv.ParseFloat(result.Params.Block.MaxBytes, 64)
+	maxBytes, err := strconv.ParseFloat(result.Result.ConsensusParams.Block.MaxBytes, 64)
 	if err != nil {
 		return 0, 0, err
 	}
-	maxGas, err := strconv.ParseFloat(result.Params.Block.MaxGas, 64)
+	maxGas, err := strconv.ParseFloat(result.Result.ConsensusParams.Block.MaxGas, 64)
 	if err != nil {
 		return 0, 0, err
 	}

@@ -182,7 +182,6 @@ func (veidx *VEIndexer) batchSync(lastIndexPointerHeight, newIndexPointerHeight 
 		validatorInfoList, err := veidx.repo.GetValidatorInfoListByChainInfoID(veidx.ChainInfoID)
 		if err != nil {
 			return lastIndexPointerHeight, errors.Wrap(err, "failed to get new validator info list after inserting new hex address list")
-
 		}
 
 		for _, validator := range validatorInfoList {
@@ -278,7 +277,6 @@ func makeValidatorExtensionList(
 	// current block txs data
 	blockTxs []types.Tx,
 ) ([]model.ValidatorExtensionVote, error) {
-
 	// after checking len(txs) >= 1
 	// firstly, we should decode first tx(txs[0]) for getting VE statuses
 	voteExtensionTx := blockTxs[0]

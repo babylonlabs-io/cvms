@@ -13,6 +13,7 @@ const (
 	// labels for packages
 	ValidatorAddressLabel    = "validator_operator_address"
 	ConsensusAddressLabel    = "validator_consensus_address"
+	BroadcastorAddressLabel  = "broadcastor_address"
 	MonikerLabel             = "moniker"
 	ProposerAddressLabel     = "proposer_address"
 	EvmChainLabel            = "evm_chain"

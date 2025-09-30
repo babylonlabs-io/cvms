@@ -110,11 +110,12 @@ func getValidatorUptimeStatus(c common.CommonApp, chainName string, validators [
 					ch <- helper.Result{Item: nil, Success: false}
 					return
 				}
-				// c.Errorf("errors: %s", err)
+				c.Errorf("errors: %s", err)
 				ch <- helper.Result{Item: nil, Success: false}
 				return
 			}
 			if resp.StatusCode() != http.StatusOK {
+				c.Errorf("errors: unexpected status code %d at %s", resp.StatusCode(), resp.Request.URL)
 				ch <- helper.Result{Item: nil, Success: false}
 				return
 			}

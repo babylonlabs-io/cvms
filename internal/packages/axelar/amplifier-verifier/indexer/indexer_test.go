@@ -10,7 +10,6 @@ import (
 	indexermodel "github.com/cosmostation/cvms/internal/common/indexer/model"
 	"github.com/cosmostation/cvms/internal/helper/logger"
 	"github.com/cosmostation/cvms/internal/packages/axelar/amplifier-verifier/model"
-
 	"github.com/stretchr/testify/assert"
 )
 

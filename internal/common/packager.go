@@ -23,6 +23,9 @@ var (
 
 		// Axelar
 		"axelar-amplifier-verifier",
+
+		// gnoland
+		"gnoland-voteindexer",
 	}
 
 	ExporterPackages = []string{
@@ -33,7 +36,7 @@ var (
 		"block", "balance", "upgrade", "block-data-analytics",
 
 		// Duties
-		"axelar-evm", "eventnonce", "oracle", "yoda",
+		"axelar-vald-heartbeats", "axelar-evm", "eventnonce", "oracle", "yoda",
 
 		// Babylon
 		"babylon-finality-provider-uptime", "babylon-btc-delegations",

@@ -154,7 +154,6 @@ func GetYodaStatus(
 					ValidatorsFailedToRespond: validatorsFailedToRespond,
 				}}
 			}(nerCh)
-
 		}
 		// close channel when all go-routines are done
 		go func() {

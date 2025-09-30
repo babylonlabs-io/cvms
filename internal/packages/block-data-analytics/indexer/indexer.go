@@ -23,8 +23,7 @@ var (
 
 // BDAIndexer means BlockDataAnalyticsIndexer
 type BDAIndexer struct {
-	subsystem           string
-	earliestBlockHeight int64
+	subsystem string
 	*common.Indexer
 	repository.BDAIndexerRepository
 }
@@ -38,7 +37,7 @@ func NewBDAIndexer(p common.Packager) (*BDAIndexer, error) {
 	indexer := common.NewIndexer(p, subsystem, status.ChainID)
 	repo := repository.NewRepository(*p.IndexerDB, subsystem, indexertypes.SQLQueryMaxDuration)
 	indexer.Lh = indexertypes.LatestHeightCache{LatestHeight: status.BlockHeight}
-	return &BDAIndexer{subsystem, status.EarliestBlockHeight, indexer, repo}, nil
+	return &BDAIndexer{subsystem, indexer, repo}, nil
 }
 
 func (idx *BDAIndexer) Start() error {
@@ -51,11 +50,11 @@ func (idx *BDAIndexer) Start() error {
 	if err != nil {
 		return errors.Wrap(err, "failed to init meta partition table")
 	}
-	err = idx.InitPartitionTablesByChainInfoID(idx.IndexName, idx.ChainID, idx.earliestBlockHeight)
+	err = idx.InitPartitionTablesByChainInfoID(idx.IndexName, idx.ChainID, idx.Lh.LatestHeight)
 	if err != nil {
 		return errors.Wrap(err, "failed to init indexer partition table")
 	}
-	err = idx.InitPartitionTablesByChainInfoID(subTableName, idx.ChainID, idx.earliestBlockHeight)
+	err = idx.InitPartitionTablesByChainInfoID(subTableName, idx.ChainID, idx.Lh.LatestHeight)
 	if err != nil {
 		return errors.Wrap(err, "failed to init indexer partition table")
 	}

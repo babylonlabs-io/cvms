@@ -12,7 +12,7 @@ groups:
   - name: AxelarAmplifierVerifierPackage
     rules:
       - alert: AmplifierVerifierFailedVoting
-        expr: cvms_axelar_amplifier_verifier_poll_vote{chain_id='axelar-dojo-1',status!~"SucceededOnChain"} - (cvms_axelar_amplifier_verifier_poll_vote offset 10m) > 0
+        expr: cvms_axelar_amplifier_verifier_poll_vote{status!~"SucceededOnChain"} - (cvms_axelar_amplifier_verifier_poll_vote offset 10m) > 0
         labels:
           severity: warning
         annotations:
@@ -20,3 +20,13 @@ groups:
           description: |
             In {{ $labels.chain_id }}, {{ $labels.verifier }} did not vote for some chains. 
             Check it now <https://public-cvms.cosmostation.io/d/axelar_dashboard/axelar-dashboard|here>
+  
+  - name: AxelarValdHeartbeatsPackage
+    rules:
+      - alert: AxelarValdHeartbeatsStopped
+        expr: increase(cvms_axelar_vald_heartbeats_count_total{status="success"}[5m]) == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Axelar Vald heartbeat has stopped for {{ $labels.moniker }} in {{ $labels.chain_id }}.'

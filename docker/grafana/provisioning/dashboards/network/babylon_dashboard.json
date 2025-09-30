@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 10,
+  "id": 14,
   "links": [],
   "panels": [
     {
@@ -43,7 +43,7 @@
         "content": "<!-- Main content -->\n<div style=\"display: flex; justify-content: space-between; align-items: center;\">\n  <!-- H2 with a link -->\n   <a href=\"https://github.com/cosmostation/cvms\" target=\"_blank\" style=\"text-decoration: none; color: inherit;\">\n    <h2 style=\"margin-right: 10px;\">Cosmos Validator Monitoring Service (CVMS) 🌌 🔭</h2>\n  </a> \n  <!-- \"Powered by Cosmostation\" on the right -->\n  <div style=\"display: flex; align-items: center;\">\n    <a href=\"https://cosmostation.io\" target=\"_blank\" style=\"text-decoration: none; color: inherit;\">\n        <span>Powered by Cosmostation </span>\n        <img src=\"https://raw.githubusercontent.com/cosmostation/chainlist/refs/heads/main/resource/cosmostation/cosmostation_color.svg\" alt=\"Logo\" style=\"height: 30px; margin-left: 5px;\">\n    </a>\n  </div>\n</div>\n\n<!-- Paragraph below the header -->\n<p>\n  The Cosmos Validator Monitoring Service (CVMS) is an open-source, integrated monitoring system designed for validators and network in the Cosmos app chain ecosystem.<br/>\n  This public dashboard is a playground for developers and beta release testing for CVMS.\n</p>\n<p>\n  <a href=\"https://github.com/cosmostation/cvms\" target=\"_blank\" style=\"text-decoration: none; color: #1E90FF;\">\n    👉 CVMS Github Link Here!\n  </a> \n  <a href=\"https://github.com/cosmostation/cvms/blob/release/docs/setup.md\" target=\"_blank\" style=\"text-decoration: none; color: #1E90FF;\">\n    👉 CVMS Setup Guide Here!!\n  </a> \n</p>",
         "mode": "html"
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "11.3.0",
       "title": "",
       "type": "text"
     },
@@ -99,7 +99,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "11.3.0",
       "targets": [
         {
           "editorMode": "code",
@@ -174,7 +174,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "11.3.0",
       "targets": [
         {
           "datasource": {
@@ -182,7 +182,7 @@
             "uid": "cvms_exporter_db"
           },
           "editorMode": "code",
-          "expr": "(cvms_block_data_analytics_block_gas_used{chain_id='$chain_id'} / scalar(cvms_block_data_analytics_block_max_gas)) * 100",
+          "expr": "(cvms_block_data_analytics_block_gas_used{chain_id='$chain_id'} / scalar(cvms_block_data_analytics_block_max_gas{chain_id='$chain_id'})) * 100",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -241,7 +241,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "11.3.0",
       "targets": [
         {
           "datasource": {
@@ -249,7 +249,7 @@
             "uid": "cvms_exporter_db"
           },
           "editorMode": "code",
-          "expr": "(cvms_block_data_analytics_block_txs_bytes{chain_id='$chain_id'} / scalar(cvms_block_data_analytics_block_max_bytes)) * 100 ",
+          "expr": "(cvms_block_data_analytics_block_txs_bytes{chain_id='$chain_id'} / scalar(cvms_block_data_analytics_block_max_bytes{chain_id='$chain_id'})) * 100 ",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -310,7 +310,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "11.3.0",
       "targets": [
         {
           "datasource": {
@@ -729,7 +729,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "11.3.0",
       "targets": [
         {
           "datasource": {
@@ -940,8 +940,8 @@
     "list": [
       {
         "current": {
-          "text": "bbn-test-5",
-          "value": "bbn-test-5"
+          "text": "bbn-1",
+          "value": "bbn-1"
         },
         "datasource": {
           "type": "prometheus",
@@ -987,8 +987,8 @@
       },
       {
         "current": {
-          "text": "bbn_test_5",
-          "value": "bbn_test_5"
+          "text": "bbn_1",
+          "value": "bbn_1"
         },
         "datasource": {
           "type": "prometheus",
@@ -1041,7 +1041,7 @@
             "value": "10"
           }
         ],
-        "query": "50",
+        "query": "10",
         "type": "textbox"
       },
       {

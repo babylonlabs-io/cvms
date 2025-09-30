@@ -173,7 +173,6 @@ func (vidx *VoteIndexer) batchSync(lastIndexPointerHeight, newIndexPointerHeight
 		validatorInfoList, err := vidx.repo.GetValidatorInfoListByChainInfoID(vidx.ChainInfoID)
 		if err != nil {
 			return lastIndexPointerHeight, errors.Wrap(err, "failed to get new validator info list after inserting new hex address list")
-
 		}
 
 		for _, validator := range validatorInfoList {

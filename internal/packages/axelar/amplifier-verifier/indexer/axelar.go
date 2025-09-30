@@ -191,7 +191,8 @@ func AmplifierPollStartFillter(events []types.BlockEvent) []Poll {
 
 // Define a struct to match JSON structure
 type Contracts struct {
-	VotingVerifier map[string]json.RawMessage `json:"VotingVerifier"`
+	VotingVerifier     map[string]json.RawMessage `json:"VotingVerifier"`
+	XrplVotingVerifier map[string]json.RawMessage `json:"XrplVotingVerifier"`
 }
 
 type Contract struct {
@@ -305,6 +306,17 @@ func ParseAxelarChainConfig(resp []byte) (map[string]contractInfo, error) {
 			addressMap[contract.Address] = contract
 		} else {
 			// log.Printf("Skipping non-contract entry: %s", chainName)
+			continue
+		}
+	}
+
+	// Iterate over XrplVotingVerifier chains
+	for chainName, rawJSON := range result.Axelar.Contracts.XrplVotingVerifier {
+		var contract contractInfo
+		if err := json.Unmarshal(rawJSON, &contract); err == nil && contract.Address != "" {
+			contract.ChainName = chainName
+			addressMap[contract.Address] = contract
+		} else {
 			continue
 		}
 	}

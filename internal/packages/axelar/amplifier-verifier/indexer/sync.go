@@ -38,7 +38,7 @@ func (idx *AxelarAmplifierVerifierIndexer) batchSync(lastIndexPoint int64) (
 	}
 
 	// get contract info
-	chainNameMap, err := GetVerifierContractAddressMap(idx.CommonClient, false)
+	chainNameMap, err := GetVerifierContractAddressMap(idx.CommonClient, idx.Mainnet)
 	if err != nil {
 		return lastIndexPoint, errors.Wrap(err, "failed get verifier register contract address")
 	}
@@ -131,37 +131,41 @@ func (idx *AxelarAmplifierVerifierIndexer) batchSync(lastIndexPoint int64) (
 
 	// first add new verifiers
 	isNewVerifier := false
-	newVerifierInfo := make([]indexermodel.VerifierInfo, 0)
+	newVerifierMap := make(map[string]bool, 0)
 	for h := startHeight; h <= endHeight; h++ {
 		for _, poll := range summary[h].polls {
 			for _, verifier := range poll.Participants {
 				_, exist := idx.Vim[verifier]
 				if !exist {
-					idx.Debugf("the %s isn't in current verifier info table, the address will be added into the meta table", verifier)
+					idx.Debugf("in %d, the %s isn't in current verifier info table, the address will be added into the meta table", h, verifier)
 					isNewVerifier = true
-					newVerifierInfo = append(newVerifierInfo, indexermodel.VerifierInfo{
-						ChainInfoID:     idx.ChainInfoID,
-						VerifierAddress: verifier,
-						Moniker:         verifier,
-					})
+					newVerifierMap[verifier] = true
 				}
 			}
 		}
 	}
 
 	if isNewVerifier {
+		newVerifierInfo := make([]indexermodel.VerifierInfo, 0)
+		for verifier := range newVerifierMap {
+			newVerifierInfo = append(newVerifierInfo, indexermodel.VerifierInfo{
+				ChainInfoID:     idx.ChainInfoID,
+				VerifierAddress: verifier,
+				Moniker:         verifier,
+			})
+		}
+
 		idx.Debugf("insert new amplifier verifiers: %d", len(newVerifierInfo))
 		err := idx.InsertVerifierInfoList(newVerifierInfo)
 		if err != nil {
 			// NOTE: fetch again validator_info list, actually already inserted the list by other indexer service
 			idx.FetchValidatorInfoList()
-			return lastIndexPoint, errors.Wrap(err, "failed to insert new reporter list")
+			return lastIndexPoint, errors.Wrapf(err, "failed to insert new verifier list: %v", newVerifierInfo)
 		}
 
 		verifierInfoList, err := idx.GetVerifierInfoListByChainInfoID(idx.ChainInfoID)
 		if err != nil {
 			return lastIndexPoint, errors.Wrap(err, "failed to get new reporter info list after inserting new hex address list")
-
 		}
 
 		for _, v := range verifierInfoList {
@@ -198,7 +202,7 @@ func (idx *AxelarAmplifierVerifierIndexer) batchSync(lastIndexPoint int64) (
 		for _, pv := range summary[h].pollVotes {
 			contractInfo, exist := chainNameMap[pv.ContractAddress]
 			if !exist {
-				return lastIndexPoint, errors.New("unexpected poll voted was occured")
+				return lastIndexPoint, errors.Errorf("unexpected poll voted was occured: %v", pv.ContractAddress)
 			}
 
 			verifierID, exist := idx.Vim[pv.VerifierAddress]
@@ -219,7 +223,6 @@ func (idx *AxelarAmplifierVerifierIndexer) batchSync(lastIndexPoint int64) (
 				Status:         model.StringToPollVote(pv.StatusStr),
 				PollVoteHeight: h,
 			})
-
 		}
 		idx.Debugf("%d poll votes will be updated in %d height", len(summary[h].pollVotes), h)
 	}
@@ -281,66 +284,3 @@ func filterVoteListByAddress(monikerIDMap indexertypes.MonikerIDMap, modelList [
 	}
 	return newList
 }
-
-// func (idx *AxelarAmplifierVerifierIndexer) MustInitPoll(chainAndPollID, contractAddress, pollID string, blockExpiry int64) map[string]model.AxelarAmplifierVerifierVote {
-// 	expireHeight, participants, err := GetPollState(idx.CommonClient, contractAddress, pollID)
-// 	if err != nil {
-// 		return nil
-// 	}
-
-// 	isNewVerifier := false
-// 	newVerifierInfo := make([]indexermodel.VerifierInfo, 0)
-// 	for _, verifier := range participants {
-// 		_, exist := idx.Vim[verifier]
-// 		if !exist {
-// 			idx.Debugf("the %s isn't in current verifier info table, the address will be added into the meta table", verifier)
-// 			isNewVerifier = true
-// 			newVerifierInfo = append(newVerifierInfo, indexermodel.VerifierInfo{
-// 				ChainInfoID:     idx.ChainInfoID,
-// 				VerifierAddress: verifier,
-// 				Moniker:         verifier,
-// 			})
-// 		}
-// 	}
-
-// 	if isNewVerifier {
-// 		idx.Debugf("insert new amplifier verifiers: %d", len(newVerifierInfo))
-// 		err := idx.InsertVerifierInfoList(newVerifierInfo)
-// 		if err != nil {
-// 			return nil
-// 		}
-
-// 		err = idx.FetchValidatorInfoList()
-// 		if err != nil {
-// 			return nil
-// 		}
-
-// 		verifierInfoList, err := idx.GetVerifierInfoListByChainInfoID(idx.ChainInfoID)
-// 		if err != nil {
-// 			return nil
-// 		}
-
-// 		for _, v := range verifierInfoList {
-// 			idx.Vim[v.VerifierAddress] = int64(v.ID)
-// 			idx.VAM[v.ID] = v.VerifierAddress
-// 		}
-// 	}
-
-// 	initVoteMap := make(map[string]model.AxelarAmplifierVerifierVote, len(participants))
-// 	pollStartHeight := expireHeight - blockExpiry
-// 	for _, verifier := range participants {
-// 		initVote := model.AxelarAmplifierVerifierVote{
-// 			// ID: Autoincrement
-// 			ChainInfoID:     idx.ChainInfoID,
-// 			CreatedAt:       time.Now(),
-// 			ChainAndPollID:  chainAndPollID,
-// 			PollStartHeight: pollStartHeight,
-// 			PollVoteHeight:  0,
-// 			VerifierID:      idx.Vim[verifier],
-// 			Status:          model.PollStart,
-// 		}
-// 		initVoteMap[verifier] = initVote
-// 	}
-
-// 	return initVoteMap
-// }

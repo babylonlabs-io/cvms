@@ -91,18 +91,18 @@ start-indexer:
 
 ## start exporter application for specific package 
 
-SPECIFIC_PACKAGE ?= block
+
+PACKAGE ?= voteindexer
+
 start-exporter-specific-package:
 	@echo "-> Start CVMS in script mode, you can use this task adding a argument like 'make start-specific-package SPECIFIC_PACKAGE=eventnonce'"
-	@echo "Selected Package: ${SPECIFIC_PACKAGE}"
-	@go run ./cmd/cvms start exporter --config ./config.yaml --log-color-disable ${LOG_COLOR_DISABLE} --log-level ${LOG_LEVEL} --package-filter ${SPECIFIC_PACKAGE} --port 9200
+	@echo "Selected Package: ${PACKAGE}"
+	@go run ./cmd/cvms start exporter --config ./config.yaml --log-color-disable ${LOG_COLOR_DISABLE} --log-level ${LOG_LEVEL} --package-filter ${PACKAGE} --port 9200
 
-### Test runner
-SPECIFIC_PACKAGE ?= voteindexer
 start-indexer-specific-package:
 	@echo "-> Start CVMS in script mode, you can use this task adding a argument like 'make start-specific-package SPECIFIC_PACKAGE=voteindexer'"
-	@echo "Selected Package: ${SPECIFIC_PACKAGE}"
-	@go run ./cmd/cvms start indexer --config ./config.yaml --log-color-disable ${LOG_COLOR_DISABLE} --log-level ${LOG_LEVEL} --package-filter ${SPECIFIC_PACKAGE} --port 9300
+	@echo "Selected Package: ${PACKAGE}"
+	@go run ./cmd/cvms start indexer --config ./config.yaml --log-color-disable ${LOG_COLOR_DISABLE} --log-level ${LOG_LEVEL} --package-filter ${PACKAGE} --port 9300
 
 ###############################################################################
 ###                             Test Packages                               ###
@@ -231,3 +231,21 @@ test-pkg-all:
 
 	@echo "End Testing"
 	@echo 	
+
+###############################################################################
+###                             golangci-lint                               ###
+###############################################################################	
+
+.PHONY: lint
+
+ci: 
+	@echo "Running golangci-lint for all linters"
+	@golangci-lint run
+
+lint:
+	@echo "Running golangci-lint for linter: $(filter-out $@,$(MAKECMDGOALS))"
+	@golangci-lint run --output.text.path stdout --enable-only $(filter-out $@,$(MAKECMDGOALS))
+
+# Prevent Make from treating arguments as file targets
+%:
+	@:
