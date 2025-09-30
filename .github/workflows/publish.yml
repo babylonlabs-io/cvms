@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - 'develop'
-      - 'hiep/add-ci'
+      - 'hiep/sync'
 
 jobs:
   docker_pipeline:
