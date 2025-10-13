@@ -179,7 +179,7 @@ bartio-beacon-80084:
     # TODO ref; https://github.com/berachain/beacon-kit/blob/main/mod/node-api/handlers/beacon/routes.go
     # - upgrade
     # - uptime
-bbn-test-5:
+bbn-test-6:
   chain_name: babylon
   protocol_type: cosmos
   mainnet: false
